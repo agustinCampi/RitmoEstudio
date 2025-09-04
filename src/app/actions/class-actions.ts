@@ -1,6 +1,7 @@
+
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
@@ -18,7 +19,7 @@ const classSchema = z.object({
 });
 
 export async function upsertClass(formData: FormData) {
-  const supabase = createClient()
+  const supabase = createAdminClient()
 
   const values = {
     id: formData.get('id') as string || undefined,
@@ -72,7 +73,7 @@ export async function upsertClass(formData: FormData) {
 }
 
 export async function deleteClass(classId: string) {
-    const supabase = createClient();
+    const supabase = createAdminClient();
 
     const { error } = await supabase.from('classes').delete().eq('id', classId);
 
