@@ -23,39 +23,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session: Session | null) => {
-      if (session) {
-        const { data: profile } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          
-          if (profile) {
-            setUser(profile as User);
-          } else {
-             // This case might happen if a user exists in auth.users but not in public.users
-            setUser({
-              id: session.user.id,
-              email: session.user.email!,
-              name: session.user.email!, // Fallback
-              role: 'student' // Fallback
-            });
-          }
+    const fetchUserProfile = async (session: Session | null) => {
+      if (session?.user) {
+        const { data: profile, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (error) {
+          console.error("Error fetching user profile:", error);
+          // Fallback user object if profile doesn't exist yet
+          setUser({
+            id: session.user.id,
+            name: session.user.email || 'Usuario',
+            email: session.user.email!,
+            role: 'student', 
+          });
+        } else if (profile) {
+          setUser(profile as User);
+        }
       } else {
         setUser(null);
       }
       setLoading(false);
+    };
+
+    // Fetch initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      fetchUserProfile(session);
+    });
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      fetchUserProfile(session);
     });
 
     return () => {
-      subscription.unsubscribe();
+      authListener.subscription.unsubscribe();
     };
   }, []);
 
   useEffect(() => {
     if (!loading) {
-      const isAuthPage = pathname === '/';
+      const isAuthPage = pathname === '/' || pathname === '/signup';
       if (!user && !isAuthPage) {
         router.push('/');
       }
