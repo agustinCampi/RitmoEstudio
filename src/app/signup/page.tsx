@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useRouter } from 'next/navigation';
@@ -5,8 +6,9 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import { createClient } from '@/lib/supabase/client';
+
 
 import { Button } from '@/components/ui/button';
 import {
@@ -30,8 +32,8 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
   const router = useRouter();
-  const { login } = useAuth();
   const { toast } = useToast();
+  const supabase = createClient();
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -42,15 +44,58 @@ export default function SignupPage() {
     },
   });
 
-  const onSubmit = (data: SignupFormValues) => {
-    // Simulate signup and login
-    console.log("Webhook a Make.com (Crear Alumno):", { name: data.name, email: data.email });
+  const onSubmit = async (data: SignupFormValues) => {
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+      options: {
+        data: {
+          name: data.name,
+          role: 'student' // Default role
+        },
+        // Optional: for email verification
+        // emailRedirectTo: `${location.origin}/auth/callback`,
+      }
+    });
+
+    if (authError) {
+      toast({
+        title: "Error en el registro",
+        description: authError.message,
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (authData.user) {
+        const { error: profileError } = await supabase
+            .from('users')
+            .insert({
+                id: authData.user.id,
+                name: data.name,
+                email: data.email,
+                role: 'student'
+            });
+
+        if (profileError) {
+            toast({
+                title: "Error creando el perfil",
+                description: profileError.message,
+                variant: "destructive"
+            });
+            // Optional: delete the user if profile creation fails
+            await supabase.auth.admin.deleteUser(authData.user.id);
+            return
+        }
+    }
+
+
     toast({
       title: "¡Registro exitoso!",
-      description: "Tu cuenta de alumno ha sido creada.",
+      description: "Por favor, revisa tu email para verificar tu cuenta.",
     });
-    login('student', data.email);
-    router.push('/dashboard');
+    router.push('/');
+    
   };
 
   return (

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -6,7 +7,9 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useAuth, UserRole } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/use-auth';
+import { createClient } from '@/lib/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -18,14 +21,8 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Logo } from '@/components/logo';
+
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Por favor, introduce un email válido." }),
@@ -36,8 +33,8 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
-  const [role, setRole] = useState<UserRole>('student');
+  const { toast } = useToast();
+  const supabase = createClient();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -47,9 +44,21 @@ export default function LoginPage() {
     },
   });
 
-  const onSubmit = (data: LoginFormValues) => {
-    login(role, data.email);
-    router.push('/dashboard');
+  const onSubmit = async (data: LoginFormValues) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: data.email,
+      password: data.password,
+    });
+    if (error) {
+      toast({
+        title: "Error al iniciar sesión",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      router.push('/dashboard');
+      // No need to call refresh, onAuthStateChange in AuthProvider will handle it
+    }
   };
 
   return (
@@ -77,25 +86,21 @@ export default function LoginPage() {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Contraseña</Label>
+                 <Link
+                    href="/forgot-password"
+                    className="text-sm text-primary underline"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </Link>
+              </div>
               <Input id="password" type="password" {...form.register('password')} />
               {form.formState.errors.password && (
                 <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>Iniciar sesión como (simulación)</Label>
-              <Select onValueChange={(value) => setRole(value as UserRole)} defaultValue={role}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona un rol" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="student">Alumno</SelectItem>
-                  <SelectItem value="teacher">Profesor</SelectItem>
-                  <SelectItem value="admin">Administrador</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            
             <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
               Iniciar Sesión
             </Button>

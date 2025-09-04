@@ -1,9 +1,12 @@
+
 "use client";
 
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import type { User, UserRole } from '@/lib/types';
-import { MOCK_USERS } from '@/lib/mock-data';
+import { createClient } from '@/lib/supabase/client';
+import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
+
 
 export interface AuthContextType {
   user: User | null;
@@ -19,20 +22,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
+  const supabase = createClient();
 
   useEffect(() => {
-    // Simulate checking for a logged-in user in session storage
-    try {
-      const storedUser = sessionStorage.getItem('ritmo-user');
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
+    const processSession = async (session: Session | null) => {
+      if (session) {
+        const { data: profile } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (profile) {
+          setUser(profile as User);
+        } else {
+          // Fallback if profile doesn't exist for some reason
+          setUser({
+            id: session.user.id,
+            email: session.user.email!,
+            name: session.user.user_metadata.name || 'Usuario',
+            role: session.user.user_metadata.role || 'student',
+          });
+        }
+      } else {
+        setUser(null);
       }
-    } catch (error) {
-      console.error("Could not parse user from sessionStorage", error);
-      sessionStorage.removeItem('ritmo-user');
-    }
-    setLoading(false);
-  }, []);
+      setLoading(false);
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      processSession(session);
+    });
+
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      processSession(session);
+    };
+
+    checkUser();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [supabase, router]);
 
   useEffect(() => {
     if (!loading) {
@@ -46,16 +78,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user, loading, pathname, router]);
 
+  // login is handled by Supabase UI now, this is for compatibility
   const login = (role: UserRole, email?: string) => {
-    const userToLogin = MOCK_USERS.find(u => u.role === role && (email ? u.email === email : true)) || MOCK_USERS.find(u => u.role === role)!;
-    setUser(userToLogin);
-    sessionStorage.setItem('ritmo-user', JSON.stringify(userToLogin));
+     console.warn("Manual login function is deprecated. Please use Supabase authentication forms.");
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    sessionStorage.removeItem('ritmo-user');
     router.push('/');
+    router.refresh();
   };
 
   const value = { user, login, logout, loading };
