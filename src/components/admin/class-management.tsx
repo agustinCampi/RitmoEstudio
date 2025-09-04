@@ -42,7 +42,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, MoreHorizontal, Trash2, Edit, Bell, Users, Clock, User, Search } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Trash2, Edit, Bell, Users, Clock, User as UserIcon, Search } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 
@@ -78,8 +78,7 @@ export default function ClassManagement() {
     resolver: zodResolver(classSchema),
   });
 
-  useEffect(() => {
-    const fetchData = async () => {
+  const fetchData = async () => {
       setLoading(true);
       
       const { data: classesData, error: classesError } = await supabase.from('classes').select('*');
@@ -102,6 +101,8 @@ export default function ClassManagement() {
 
       setLoading(false);
     };
+
+  useEffect(() => {
     fetchData();
   }, [toast]);
   
@@ -127,13 +128,22 @@ export default function ClassManagement() {
   };
   
   const onSubmit = async (data: ClassFormValues) => {
-    const teacherName = teachers.find(t => t.id === data.teacherId)?.name || 'N/A';
+    const teacher = teachers.find(t => t.id === data.teacherId);
+    if (!teacher) {
+        toast({ title: "Error", description: "Profesor no encontrado.", variant: "destructive" });
+        return;
+    }
     
+    const classPayload = {
+      ...data,
+      teacherName: teacher.name,
+    };
+
     if (editingClass) {
       // Update class in Supabase
       const { data: updatedData, error } = await supabase
         .from('classes')
-        .update({ ...data, teacherName })
+        .update(classPayload)
         .eq('id', editingClass.id)
         .select()
         .single();
@@ -141,14 +151,13 @@ export default function ClassManagement() {
       if (error) {
          toast({ title: "Error al actualizar", description: error.message, variant: "destructive" });
       } else {
-        setClasses(classes.map(c => c.id === editingClass.id ? updatedData as Class : c));
         toast({ title: "Clase actualizada", description: `La clase "${data.name}" ha sido modificada.` });
+        fetchData(); // Refetch all data
       }
     } else {
       // Create class in Supabase
       const newClassPayload = {
-        ...data,
-        teacherName,
+        ...classPayload,
         image: `https://picsum.photos/600/400?random=${Date.now()}`,
         bookedStudents: 0,
       };
@@ -161,8 +170,8 @@ export default function ClassManagement() {
       if (error) {
         toast({ title: "Error al crear", description: error.message, variant: "destructive" });
       } else {
-        setClasses([newClass as Class, ...classes]);
         toast({ title: "Clase creada", description: `La clase "${data.name}" ha sido añadida.` });
+        fetchData(); // Refetch all data
       }
     }
     setFormOpen(false);
@@ -332,7 +341,7 @@ export default function ClassManagement() {
                   </CardHeader>
                   <CardContent className="flex-grow space-y-3 text-sm">
                     <div className="flex items-center gap-2 text-muted-foreground">
-                        <User className="h-4 w-4" />
+                        <UserIcon className="h-4 w-4" />
                         <span>Prof: {cls.teacherName}</span>
                     </div>
                     <div className="flex items-center gap-2 text-muted-foreground">
@@ -428,6 +437,9 @@ export default function ClassManagement() {
                  </div>
               </div>
               <DialogFooter>
+                <DialogClose asChild>
+                    <Button variant="outline">Cancelar</Button>
+                </DialogClose>
                 <Button type="submit">Guardar Cambios</Button>
               </DialogFooter>
           </form>
@@ -436,3 +448,4 @@ export default function ClassManagement() {
     </div>
   );
 }
+    
