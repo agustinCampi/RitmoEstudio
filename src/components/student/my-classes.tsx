@@ -1,14 +1,14 @@
+
 "use client";
 
-import { useState } from 'react';
-import { MOCK_CLASSES } from '@/lib/mock-data';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import type { Class } from '@/lib/types';
+import { supabase } from '@/lib/supabase/client';
 
 import {
   Card,
-  CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -25,14 +25,34 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-// Simulate a student having booked the first two classes
-const bookedClassIds = [MOCK_CLASSES[0].id, MOCK_CLASSES[1].id];
-
 export default function MyClasses() {
   const { toast } = useToast();
-  const [myBookings, setMyBookings] = useState(MOCK_CLASSES.filter(c => bookedClassIds.includes(c.id)));
+  const [myBookings, setMyBookings] = useState<Class[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBookedClasses = async () => {
+      // In a real app, you would have a 'bookings' table and join it with 'classes'.
+      // For now, we'll simulate this by fetching a few classes and pretending they are booked.
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('classes')
+        .select('*')
+        .limit(2); 
+
+      if (error) {
+        toast({ title: "Error", description: "No se pudieron cargar tus clases reservadas.", variant: "destructive" });
+      } else {
+        setMyBookings(data as Class[]);
+      }
+      setLoading(false);
+    };
+
+    fetchBookedClasses();
+  }, [toast]);
 
   const handleCancelBooking = (classId: string, className: string) => {
+    // This would delete a row from the 'bookings' table.
     console.log('Webhook a Make.com (Cancelar Reserva):', { classId, studentId: 'usr_student_1' });
     
     setMyBookings(myBookings.filter(b => b.id !== classId));
@@ -42,6 +62,10 @@ export default function MyClasses() {
       variant: 'destructive',
     });
   };
+
+  if (loading) {
+      return <div className="text-center py-12">Cargando tus clases...</div>;
+  }
 
   if (myBookings.length === 0) {
     return (
@@ -89,3 +113,4 @@ export default function MyClasses() {
     </div>
   );
 }
+

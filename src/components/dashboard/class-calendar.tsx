@@ -1,8 +1,10 @@
 
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { Class } from '@/lib/types';
+import { supabase } from '@/lib/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import { es } from 'date-fns/locale';
@@ -11,6 +13,7 @@ import { Clock, User, BarChart, Calendar as CalendarIcon, Users, Star } from 'lu
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '../ui/skeleton';
 
 const dayMapping: { [key: string]: number } = {
   'domingo': 0, 'lunes': 1, 'martes': 2, 'miércoles': 3, 'jueves': 4, 'viernes': 5, 'sábado': 6,
@@ -40,9 +43,32 @@ interface ClassCalendarProps {
     highlightedClasses?: Class[];
 }
 
-export function ClassCalendar({ classes, highlightedClasses = [] }: ClassCalendarProps) {
+export function ClassCalendar({ classes: initialClasses, highlightedClasses = [] }: ClassCalendarProps) {
+  const { toast } = useToast();
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [classes, setClasses] = useState<Class[]>(initialClasses);
+  const [loading, setLoading] = useState(true);
   
+  useEffect(() => {
+    const fetchClasses = async () => {
+      setLoading(true);
+      const { data, error } = await supabase.from('classes').select('*');
+      if (error) {
+        toast({ title: "Error", description: "No se pudieron cargar las clases para el calendario.", variant: "destructive" });
+      } else {
+        setClasses(data as Class[]);
+      }
+      setLoading(false);
+    };
+
+    // If initial classes are empty, fetch from Supabase. This covers the student/teacher case.
+    if (initialClasses.length === 0) {
+        fetchClasses();
+    } else {
+        setLoading(false);
+    }
+  }, [initialClasses, toast]);
+
   const highlightedClassIds = useMemo(() => new Set(highlightedClasses.map(c => c.id)), [highlightedClasses]);
 
   const classesByDate = useMemo(() => {
@@ -95,6 +121,30 @@ export function ClassCalendar({ classes, highlightedClasses = [] }: ClassCalenda
         backgroundColor: 'hsl(var(--primary))'
     }
   };
+  
+  if (loading) {
+      return (
+          <Card>
+              <CardHeader>
+                  <Skeleton className="h-8 w-2/3" />
+                  <Skeleton className="h-4 w-1/2" />
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="md:col-span-2">
+                      <Skeleton className="h-[300px] w-full" />
+                  </div>
+                  <div className="md:col-span-1 space-y-4">
+                      <Skeleton className="h-8 w-1/2" />
+                      <div className="space-y-3">
+                          <Skeleton className="h-16 w-full" />
+                          <Skeleton className="h-16 w-full" />
+                          <Skeleton className="h-16 w-full" />
+                      </div>
+                  </div>
+              </CardContent>
+          </Card>
+      )
+  }
 
   return (
     <Card>
@@ -178,3 +228,4 @@ export function ClassCalendar({ classes, highlightedClasses = [] }: ClassCalenda
     </Card>
   );
 }
+
