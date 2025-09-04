@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "../ui/button";
 import { Database, Upload } from "lucide-react";
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { MOCK_USERS, MOCK_CLASSES } from "@/lib/mock-data";
 
@@ -25,6 +25,7 @@ import { MOCK_USERS, MOCK_CLASSES } from "@/lib/mock-data";
 export function AdminDataSeeder({ onDataSeeded }: { onDataSeeded: () => void }) {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const supabase = createClient();
 
   const handleSeedDatabase = async () => {
     setLoading(true);

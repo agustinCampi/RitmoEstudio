@@ -6,7 +6,7 @@ import { DashboardHeader } from "@/components/dashboard-header";
 import AttendanceTracker from "@/components/teacher/attendance-tracker";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 import { Class, User } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -15,6 +15,7 @@ export default function AttendancePage() {
   const router = useRouter();
   const params = useParams();
   const classId = params ? (Array.isArray(params.classId) ? params.classId[0] : params.classId as string) : '';
+  const supabase = createClient();
   
   const [classData, setClassData] = useState<Class | null>(null);
   const [studentsInClass, setStudentsInClass] = useState<User[]>([]);

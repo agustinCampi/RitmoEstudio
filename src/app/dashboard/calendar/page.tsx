@@ -1,10 +1,11 @@
+
 "use client";
 
 import { DashboardHeader } from "@/components/dashboard-header";
 import { ClassCalendar } from "@/components/dashboard/class-calendar";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 import { Class } from "@/lib/types";
 
 export default function CalendarPage() {
@@ -12,6 +13,7 @@ export default function CalendarPage() {
     const [classes, setClasses] = useState<Class[]>([]);
     const [myClasses, setMyClasses] = useState<Class[]>([]);
     const [loading, setLoading] = useState(true);
+    const supabase = createClient();
 
     useEffect(() => {
         const fetchClasses = async () => {

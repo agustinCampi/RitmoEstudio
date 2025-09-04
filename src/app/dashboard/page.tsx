@@ -8,7 +8,7 @@ import { Calendar, Users, BookUser } from "lucide-react";
 import { ClassCalendar } from "@/components/dashboard/class-calendar";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 import { Class, User } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -17,6 +17,7 @@ export default function DashboardPage() {
   const [classes, setClasses] = useState<Class[]>([]);
   const [students, setStudents] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const supabase = createClient();
 
   const fetchData = async () => {
     setLoading(true);

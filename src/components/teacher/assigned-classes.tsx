@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import Image from "next/image";
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 import { Class } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -27,6 +27,7 @@ export default function AssignedClasses() {
   const { toast } = useToast();
   const [assignedClasses, setAssignedClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);
+  const supabase = createClient();
 
   useEffect(() => {
     const fetchAssignedClasses = async () => {

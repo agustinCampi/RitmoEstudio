@@ -1,7 +1,8 @@
+
 "use client";
 
 import { useState } from 'react';
-import type { StudentProfile } from '@/lib/types';
+import type { User as StudentProfile } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Button } from '../ui/button';

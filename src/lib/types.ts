@@ -1,3 +1,4 @@
+
 export type UserRole = 'admin' | 'teacher' | 'student';
 
 export interface User {
@@ -5,6 +6,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  created_at?: string;
 }
 
 export type ClassLevel = 'principiante' | 'intermedio' | 'avanzado';

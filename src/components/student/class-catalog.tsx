@@ -5,7 +5,7 @@ import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import type { Class, ClassLevel } from '@/lib/types';
-import { supabase } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 
 import {
   Card,
@@ -33,6 +33,7 @@ export default function ClassCatalog() {
   const [selectedCategory, setSelectedCategory] = useState('Todas');
   const [selectedLevel, setSelectedLevel] = useState<ClassLevel | 'Todos'>('Todos');
   const [categories, setCategories] = useState<string[]>(["Todas"]);
+  const supabase = createClient();
 
 
   useEffect(() => {
@@ -202,4 +203,3 @@ export default function ClassCatalog() {
     </div>
   );
 }
-

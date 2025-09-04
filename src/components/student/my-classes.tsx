@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { Class } from '@/lib/types';
-import { supabase } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 
 import {
   Card,
@@ -29,6 +29,7 @@ export default function MyClasses() {
   const { toast } = useToast();
   const [myBookings, setMyBookings] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);
+  const supabase = createClient();
 
   useEffect(() => {
     const fetchBookedClasses = async () => {
@@ -113,4 +114,3 @@ export default function MyClasses() {
     </div>
   );
 }
-

@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 import type { Database } from '@/lib/types/supabase';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -54,6 +54,7 @@ export default function StudentManagement() {
   const [loading, setLoading] = useState(true);
   const [isFormOpen, setFormOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const supabase = createClient();
 
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentSchema),
@@ -244,5 +245,3 @@ export default function StudentManagement() {
     </div>
   );
 }
-
-    
