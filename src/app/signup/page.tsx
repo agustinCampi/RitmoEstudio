@@ -53,8 +53,6 @@ export default function SignupPage() {
           name: data.name,
           role: 'student' // Default role
         },
-        // Optional: for email verification
-        // emailRedirectTo: `${location.origin}/auth/callback`,
       }
     });
 
@@ -83,8 +81,9 @@ export default function SignupPage() {
                 description: profileError.message,
                 variant: "destructive"
             });
-            // Optional: delete the user if profile creation fails
-            await supabase.auth.admin.deleteUser(authData.user.id);
+            // NOTE: We are not deleting the user here if profile creation fails
+            // to avoid needing admin privileges on the client-side.
+            // This case should be handled gracefully, maybe with a retry mechanism or server-side logic.
             return
         }
     }
