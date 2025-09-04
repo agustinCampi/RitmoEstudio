@@ -11,7 +11,6 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { Class, User } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AdminDataSeeder } from "@/components/admin/admin-data-seeder";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -40,7 +39,6 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <p className="text-muted-foreground">Aquí puedes gestionar todos los aspectos del estudio de baile.</p>
-        <AdminDataSeeder onDataSeeded={fetchData} />
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Link href="/dashboard/classes">
@@ -62,13 +60,13 @@ export default function DashboardPage() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {loading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font.bold">{students.length}</div>}
+              {loading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{students.length}</div>}
               <p className="text-xs text-muted-foreground">Alumnos registrados en el sistema</p>
             </CardContent>
           </Card>
         </Link>
          <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y_0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Reservas Totales</CardTitle>
             <BookUser className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
