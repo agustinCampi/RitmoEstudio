@@ -5,6 +5,7 @@ import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import type { User } from '@/lib/types';
 import { supabase } from '@/lib/supabase/client';
+import type { Session } from '@supabase/supabase-js';
 
 
 export interface AuthContextType {
@@ -22,33 +23,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { data: profile } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        
-        setUser(profile as User ?? null);
-      }
-      setLoading(false);
-    }
-    getSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session: Session | null) => {
       if (session) {
         const { data: profile } = await supabase
             .from('users')
             .select('*')
             .eq('id', session.user.id)
             .single();
-          setUser(profile as User ?? null);
+          
+          if (profile) {
+            setUser(profile as User);
+          } else {
+             // This case might happen if a user exists in auth.users but not in public.users
+            setUser({
+              id: session.user.id,
+              email: session.user.email!,
+              name: session.user.email!, // Fallback
+              role: 'student' // Fallback
+            });
+          }
       } else {
         setUser(null);
       }
-       setLoading(false);
+      setLoading(false);
     });
 
     return () => {
@@ -58,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!loading) {
-      const isAuthPage = pathname === '/' || pathname === '/signup';
+      const isAuthPage = pathname === '/';
       if (!user && !isAuthPage) {
         router.push('/');
       }
