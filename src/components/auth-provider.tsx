@@ -31,16 +31,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .eq('id', session.user.id)
           .single();
         
-        if (error) {
-          console.error("Error fetching user profile:", error);
-          // Fallback user object if profile doesn't exist yet
-          setUser({
-            id: session.user.id,
-            name: session.user.email || 'Usuario',
-            email: session.user.email!,
-            role: 'student', 
-          });
-        } else if (profile) {
+        if (error || !profile) {
+            console.error("Error fetching user profile or profile not found:", error?.message || "No profile found for this user.");
+            // Fallback user object if profile doesn't exist yet
+            // This is a failsafe, but the profile should exist.
+            setUser({
+                id: session.user.id,
+                name: session.user.email || 'Usuario',
+                email: session.user.email!,
+                // A better fallback might be to check the email, or default to student
+                role: session.user.email?.includes('admin') ? 'admin' : 'student',
+            });
+        } else {
           setUser(profile as User);
         }
       } else {
@@ -49,13 +51,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     };
 
-    // Fetch initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      fetchUserProfile(session);
-    });
-
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      fetchUserProfile(session);
+        fetchUserProfile(session);
+    });
+    
+    // Initial fetch
+    supabase.auth.getSession().then(({ data: { session } }) => {
+        fetchUserProfile(session);
     });
 
     return () => {
