@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -40,7 +41,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, MoreHorizontal, Trash2, Edit, Bell, Users, Clock, User } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Trash2, Edit, Bell, Users, Clock, User, Search } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 
@@ -58,12 +59,18 @@ const classSchema = z.object({
 type ClassFormValues = z.infer<typeof classSchema>;
 
 const teachers = MOCK_USERS.filter(u => u.role === 'teacher');
+const categories = ["Todas", ...new Set(MOCK_CLASSES.map(c => c.category))];
+const levels: (ClassLevel | 'Todos')[] = ["Todos", "principiante", "intermedio", "avanzado"];
+
 
 export default function ClassManagement() {
   const { toast } = useToast();
   const [classes, setClasses] = useState<Class[]>(MOCK_CLASSES);
   const [isFormOpen, setFormOpen] = useState(false);
   const [editingClass, setEditingClass] = useState<Class | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('Todas');
+  const [selectedLevel, setSelectedLevel] = useState<ClassLevel | 'Todos'>('Todos');
 
   const form = useForm<ClassFormValues>({
     resolver: zodResolver(classSchema),
@@ -118,6 +125,20 @@ export default function ClassManagement() {
     setClasses(classes.filter(c => c.id !== classId));
     toast({ title: "Clase eliminada", variant: "destructive" });
   };
+  
+  const filteredClasses = useMemo(() => {
+    return classes.filter(cls => {
+      const matchesCategory = selectedCategory === 'Todas' || cls.category === selectedCategory;
+      const matchesLevel = selectedLevel === 'Todos' || cls.level === selectedLevel;
+      const matchesSearch = searchTerm === '' || 
+                            cls.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                            cls.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            cls.teacherName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            cls.level.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesCategory && matchesLevel && matchesSearch;
+    });
+  }, [searchTerm, selectedCategory, selectedLevel, classes]);
+
 
   const NotifyStudentsDialog = ({ classId }: { classId: string }) => {
     const [message, setMessage] = useState('');
@@ -165,78 +186,119 @@ export default function ClassManagement() {
   
   return (
     <div className="space-y-6">
-       <div className="flex items-center justify-between">
+       <div className="flex items-center justify-between gap-4 flex-wrap">
             <h2 className="font-headline text-2xl font-bold">Lista de Clases</h2>
             <Button onClick={() => handleOpenForm()}>
                 <PlusCircle className="mr-2 h-4 w-4" /> Crear Clase
             </Button>
         </div>
-      
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {classes.map((cls) => (
-            <Card key={cls.id} className="flex flex-col">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                    <div className="flex-grow">
-                        <Badge variant="secondary" className="w-fit mb-2">{cls.category}</Badge>
-                        <CardTitle>{cls.name}</CardTitle>
-                        <CardDescription className="capitalize">{cls.level}</CardDescription>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Abrir menú</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                         <DropdownMenuItem onClick={() => handleOpenForm(cls)}>
-                            <Edit className="mr-2 h-4 w-4" /> Editar
-                         </DropdownMenuItem>
-                         <NotifyStudentsDialog classId={cls.id} />
-                         <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:text-red-500">
-                                <Trash2 className="mr-2 h-4 w-4" /> Eliminar
-                              </DropdownMenuItem>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Esta acción no se puede deshacer. Se eliminará la clase permanentemente.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDelete(cls.id)} className="bg-destructive hover:bg-destructive/90">Eliminar</AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-              </CardHeader>
-              <CardContent className="flex-grow space-y-3 text-sm">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                    <User className="h-4 w-4" />
-                    <span>Prof: {cls.teacherName}</span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                    <Clock className="h-4 w-4" />
-                    <span>{cls.schedule}</span>
-                </div>
-              </CardContent>
-              <CardFooter className="bg-muted/50 p-4 flex justify-center items-center rounded-b-lg">
-                <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-primary" />
-                    <span className="font-bold">{cls.bookedStudents} / {cls.maxStudents}</span>
-                    <span className="text-muted-foreground">Cupos</span>
-                </div>
-              </CardFooter>
-            </Card>
-          ))}
+        
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Input 
+            placeholder="Buscar por clase, profesor, nivel..."
+            className="pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
+        <div className="flex items-center gap-4">
+            <Select onValueChange={setSelectedCategory} defaultValue={selectedCategory}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                    <SelectValue placeholder="Categoría" />
+                </SelectTrigger>
+                <SelectContent>
+                    {categories.map(category => (
+                        <SelectItem key={category} value={category}>{category}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            <Select onValueChange={(value) => setSelectedLevel(value as ClassLevel | 'Todos')} defaultValue={selectedLevel}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                    <SelectValue placeholder="Nivel" />
+                </SelectTrigger>
+                <SelectContent>
+                    {levels.map(level => (
+                        <SelectItem key={level} value={level} className="capitalize">{level}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        </div>
+      </div>
+      
+        {filteredClasses.length > 0 ? (
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {filteredClasses.map((cls) => (
+                <Card key={cls.id} className="flex flex-col">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                        <div className="flex-grow">
+                            <Badge variant="secondary" className="w-fit mb-2">{cls.category}</Badge>
+                            <CardTitle>{cls.name}</CardTitle>
+                            <CardDescription className="capitalize">{cls.level}</CardDescription>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Abrir menú</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                             <DropdownMenuItem onClick={() => handleOpenForm(cls)}>
+                                <Edit className="mr-2 h-4 w-4" /> Editar
+                             </DropdownMenuItem>
+                             <NotifyStudentsDialog classId={cls.id} />
+                             <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:text-red-500">
+                                    <Trash2 className="mr-2 h-4 w-4" /> Eliminar
+                                  </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Esta acción no se puede deshacer. Se eliminará la clase permanentemente.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDelete(cls.id)} className="bg-destructive hover:bg-destructive/90">Eliminar</AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="flex-grow space-y-3 text-sm">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                        <User className="h-4 w-4" />
+                        <span>Prof: {cls.teacherName}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                        <Clock className="h-4 w-4" />
+                        <span>{cls.schedule}</span>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="bg-muted/50 p-4 flex justify-center items-center rounded-b-lg">
+                    <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-primary" />
+                        <span className="font-bold">{cls.bookedStudents} / {cls.maxStudents}</span>
+                        <span className="text-muted-foreground">Cupos</span>
+                    </div>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+        ) : (
+             <div className="text-center py-12 border-2 border-dashed rounded-lg">
+                <h3 className="font-headline text-2xl font-bold">No se encontraron clases</h3>
+                <p className="text-muted-foreground mt-2">Prueba a cambiar los filtros o el término de búsqueda.</p>
+            </div>
+        )}
       
       <Dialog open={isFormOpen} onOpenChange={setFormOpen}>
         <DialogContent className="sm:max-w-[425px]">
@@ -317,5 +379,3 @@ export default function ClassManagement() {
     </div>
   );
 }
-
-    
