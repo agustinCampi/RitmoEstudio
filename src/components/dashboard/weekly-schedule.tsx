@@ -1,9 +1,11 @@
 
 import { useMemo } from 'react';
 import type { Class } from '@/lib/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Clock } from 'lucide-react';
+import { Clock, User, BarChart, BookOpen } from 'lucide-react';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Button } from '../ui/button';
 
 interface WeeklyScheduleProps {
   classes: Class[];
@@ -53,7 +55,6 @@ export function WeeklySchedule({ classes }: WeeklyScheduleProps) {
       });
     });
     
-    // Sort classes within each day by time
     for (const day in schedule) {
         schedule[day].sort((a, b) => {
             const timeA = a.schedule.split(' ')[0];
@@ -71,27 +72,55 @@ export function WeeklySchedule({ classes }: WeeklyScheduleProps) {
         <CardTitle className="font-headline text-2xl">Horario de la Semana</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-2">
           {daysOfWeek.map(day => (
-            <div key={day} className="flex flex-col gap-4">
-              <h3 className="text-center font-bold capitalize text-lg text-muted-foreground">{day}</h3>
-              <div className="bg-muted/30 rounded-lg p-2 space-y-3 min-h-48">
+            <div key={day} className="flex flex-col gap-3">
+              <h3 className="text-center font-bold capitalize text-md text-muted-foreground">{day.slice(0,3)}</h3>
+              <div className="bg-muted/30 rounded-lg p-2 space-y-2 min-h-48">
                 {scheduleByDay[day] && scheduleByDay[day].length > 0 ? (
                   scheduleByDay[day].map(cls => (
-                    <Card key={cls.id} className="bg-card/80 hover:bg-card transition-shadow shadow-md hover:shadow-lg">
-                      <CardContent className="p-3">
-                        <p className="font-bold text-sm truncate">{cls.name}</p>
-                        <p className="text-xs text-muted-foreground capitalize">{cls.level}</p>
-                        <div className="flex items-center gap-1.5 text-xs text-primary pt-2">
-                           <Clock className="w-3 h-3" /> 
-                           <span>{cls.schedule}</span>
+                    <Dialog key={cls.id}>
+                      <DialogTrigger asChild>
+                        <div className="bg-card cursor-pointer hover:bg-accent hover:text-accent-foreground transition-all rounded-lg px-2 py-1.5 w-full text-left">
+                          <p className="font-bold text-xs truncate">{cls.name}</p>
+                          <div className="flex items-center gap-1.5 text-xs text-primary/80 pt-1">
+                            <Clock className="w-3 h-3" />
+                            <span>{cls.schedule}</span>
+                          </div>
                         </div>
-                      </CardContent>
-                    </Card>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle className="font-headline text-2xl">{cls.name}</DialogTitle>
+                           <Badge variant="secondary" className="w-fit capitalize">{cls.category}</Badge>
+                        </DialogHeader>
+                        <div className="space-y-4 pt-4">
+                          <p className="text-muted-foreground">{cls.description}</p>
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div className="flex items-center gap-2">
+                                <User className="w-4 h-4 text-primary"/>
+                                <span>Profesor: <span className="font-medium">{cls.teacherName}</span></span>
+                            </div>
+                             <div className="flex items-center gap-2">
+                                <BarChart className="w-4 h-4 text-primary"/>
+                                <span className="capitalize">Nivel: <span className="font-medium">{cls.level}</span></span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Clock className="w-4 h-4 text-primary"/>
+                                <span>Duración: <span className="font-medium">{cls.duration} min</span></span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <BookOpen className="w-4 h-4 text-primary"/>
+                                <span>Horario: <span className="font-medium">{cls.schedule}</span></span>
+                            </div>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   ))
                 ) : (
                   <div className="flex items-center justify-center h-full">
-                    <p className="text-sm text-muted-foreground/50">Sin clases</p>
+                    <p className="text-xs text-muted-foreground/50">Sin clases</p>
                   </div>
                 )}
               </div>
