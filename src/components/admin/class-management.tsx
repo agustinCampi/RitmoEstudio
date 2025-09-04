@@ -94,7 +94,7 @@ export default function ClassManagement() {
       setLoading(false);
     };
     fetchClasses();
-  }, [toast, supabase]);
+  }, [toast]);
   
   const handleOpenForm = (cls: Class | null = null) => {
     setEditingClass(cls);
@@ -137,7 +137,7 @@ export default function ClassManagement() {
       }
     } else {
       // Create class in Supabase
-      const newClassPayload = {
+      const newClassPayload: Database['public']['Tables']['classes']['Insert'] = {
         ...data,
         teacherName,
         image: `https://picsum.photos/600/400?random=${Date.now()}`,

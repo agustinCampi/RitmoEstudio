@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [router, supabase.auth]);
+  }, []);
 
   useEffect(() => {
     if (!loading) {

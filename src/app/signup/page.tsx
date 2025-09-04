@@ -79,7 +79,9 @@ export default function SignupPage() {
                 description: profileError.message,
                 variant: "destructive"
             });
-            return
+            // Optional: delete the user if profile creation fails
+            // await supabase.auth.admin.deleteUser(authData.user.id);
+            return;
         }
     }
 
