@@ -4,8 +4,8 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import type { User } from '@/lib/types';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import type { Database } from '@/lib/types/supabase';
+import { supabase } from '@/lib/supabase/client';
+
 
 export interface AuthContextType {
   user: User | null;
@@ -20,7 +20,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
-  const supabase = createClientComponentClient<Database>();
 
   useEffect(() => {
     const getSession = async () => {

@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { MOCK_USERS } from '@/lib/mock-data';
 import type { Class, ClassLevel } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { supabase } from '@/lib/supabase/client';
 import type { Database } from '@/lib/types/supabase';
 
 import { Button } from '@/components/ui/button';
@@ -74,7 +74,6 @@ export default function ClassManagement() {
   const [selectedCategory, setSelectedCategory] = useState('Todas');
   const [selectedLevel, setSelectedLevel] = useState<ClassLevel | 'Todos'>('Todos');
   const [categories, setCategories] = useState<string[]>(["Todas"]);
-  const supabase = createClientComponentClient<Database>();
 
   const form = useForm<ClassFormValues>({
     resolver: zodResolver(classSchema),
