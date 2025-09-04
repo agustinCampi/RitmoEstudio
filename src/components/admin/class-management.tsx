@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { MOCK_CLASSES, MOCK_USERS } from '@/lib/mock-data';
-import type { Class } from '@/lib/types';
+import type { Class, ClassLevel } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 import {
@@ -60,6 +60,7 @@ const classSchema = z.object({
   duration: z.coerce.number().min(30, "La duración mínima es de 30 minutos."),
   maxStudents: z.coerce.number().min(1, "Debe haber al menos un cupo."),
   category: z.string().nonempty("La categoría es obligatoria."),
+  level: z.enum(['principiante', 'intermedio', 'avanzado']),
 });
 
 type ClassFormValues = z.infer<typeof classSchema>;
@@ -87,10 +88,11 @@ export default function ClassManagement() {
         duration: cls.duration,
         maxStudents: cls.maxStudents,
         category: cls.category,
+        level: cls.level,
       });
     } else {
       form.reset({
-        name: '', description: '', teacherId: '', schedule: '', duration: 60, maxStudents: 10, category: ''
+        name: '', description: '', teacherId: '', schedule: '', duration: 60, maxStudents: 10, category: '', level: 'principiante'
       });
     }
     setFormOpen(true);
@@ -195,7 +197,7 @@ export default function ClassManagement() {
               <TableRow key={cls.id}>
                 <TableCell>
                   <div className="font-medium">{cls.name}</div>
-                  <div className="text-sm text-muted-foreground">{cls.category}</div>
+                  <div className="text-sm text-muted-foreground capitalize">{cls.level} - {cls.category}</div>
                 </TableCell>
                 <TableCell>{cls.teacherName}</TableCell>
                 <TableCell>{cls.schedule}</TableCell>
@@ -232,7 +234,7 @@ export default function ClassManagement() {
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(cls.id)} className="bg-red-600 hover:bg-red-700">Eliminar</AlertDialogAction>
+                              <AlertDialogAction onClick={() => handleDelete(cls.id)} className="bg-destructive hover:bg-destructive/90">Eliminar</AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
@@ -271,18 +273,32 @@ export default function ClassManagement() {
                 </Select>
                  {form.formState.errors.teacherId && <p className="text-sm text-destructive">{form.formState.errors.teacherId.message}</p>}
               </div>
-              <div>
-                <Label htmlFor="category">Categoría</Label>
-                <Select onValueChange={(value) => form.setValue('category', value)} defaultValue={form.getValues('category')}>
-                  <SelectTrigger><SelectValue placeholder="Selecciona una categoría" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Ritmos Latinos">Ritmos Latinos</SelectItem>
-                    <SelectItem value="Danza Urbana">Danza Urbana</SelectItem>
-                    <SelectItem value="Danza Clásica">Danza Clásica</SelectItem>
-                    <SelectItem value="Baile Moderno">Baile Moderno</SelectItem>
-                  </SelectContent>
-                </Select>
-                 {form.formState.errors.category && <p className="text-sm text-destructive">{form.formState.errors.category.message}</p>}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="category">Categoría</Label>
+                  <Select onValueChange={(value) => form.setValue('category', value)} defaultValue={form.getValues('category')}>
+                    <SelectTrigger><SelectValue placeholder="Selecciona una categoría" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Ritmos Latinos">Ritmos Latinos</SelectItem>
+                      <SelectItem value="Danza Urbana">Danza Urbana</SelectItem>
+                      <SelectItem value="Danza Clásica">Danza Clásica</SelectItem>
+                      <SelectItem value="Baile Moderno">Baile Moderno</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {form.formState.errors.category && <p className="text-sm text-destructive">{form.formState.errors.category.message}</p>}
+                </div>
+                 <div>
+                  <Label htmlFor="level">Nivel</Label>
+                  <Select onValueChange={(value) => form.setValue('level', value as ClassLevel)} defaultValue={form.getValues('level')}>
+                    <SelectTrigger><SelectValue placeholder="Selecciona un nivel" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="principiante">Principiante</SelectItem>
+                      <SelectItem value="intermedio">Intermedio</SelectItem>
+                      <SelectItem value="avanzado">Avanzado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {form.formState.errors.level && <p className="text-sm text-destructive">{form.formState.errors.level.message}</p>}
+                </div>
               </div>
               <div>
                 <Label htmlFor="schedule">Horario</Label>

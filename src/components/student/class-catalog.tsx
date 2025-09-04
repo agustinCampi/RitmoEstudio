@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { MOCK_CLASSES } from '@/lib/mock-data';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
+import type { ClassLevel } from '@/lib/types';
 import {
   Card,
   CardContent,
@@ -19,12 +20,14 @@ import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 const categories = ["Todas", ...new Set(MOCK_CLASSES.map(c => c.category))];
+const levels: (ClassLevel | 'Todos')[] = ["Todos", "principiante", "intermedio", "avanzado"];
 
 export default function ClassCatalog() {
   const { toast } = useToast();
   const [bookedClasses, setBookedClasses] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todas');
+  const [selectedLevel, setSelectedLevel] = useState<ClassLevel | 'Todos'>('Todos');
 
   const handleBookClass = (classId: string, className: string) => {
     if (bookedClasses.includes(classId)) return;
@@ -42,12 +45,15 @@ export default function ClassCatalog() {
   const filteredClasses = useMemo(() => {
     return MOCK_CLASSES.filter(cls => {
       const matchesCategory = selectedCategory === 'Todas' || cls.category === selectedCategory;
+      const matchesLevel = selectedLevel === 'Todos' || cls.level === selectedLevel;
       const matchesSearch = searchTerm === '' || 
                             cls.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                            cls.description.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesCategory && matchesSearch;
+                            cls.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            cls.teacherName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            cls.level.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesCategory && matchesLevel && matchesSearch;
     });
-  }, [searchTerm, selectedCategory]);
+  }, [searchTerm, selectedCategory, selectedLevel]);
 
   return (
     <div className="space-y-6">
@@ -55,14 +61,13 @@ export default function ClassCatalog() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input 
-            placeholder="Buscar por nombre o descripción..."
+            placeholder="Buscar por clase, profesor, nivel..."
             className="pl-10"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">Filtrar por:</span>
+        <div className="flex items-center gap-4">
             <Select onValueChange={setSelectedCategory} defaultValue={selectedCategory}>
                 <SelectTrigger className="w-full md:w-[180px]">
                     <SelectValue placeholder="Categoría" />
@@ -70,6 +75,16 @@ export default function ClassCatalog() {
                 <SelectContent>
                     {categories.map(category => (
                         <SelectItem key={category} value={category}>{category}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            <Select onValueChange={(value) => setSelectedLevel(value as ClassLevel | 'Todos')} defaultValue={selectedLevel}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                    <SelectValue placeholder="Nivel" />
+                </SelectTrigger>
+                <SelectContent>
+                    {levels.map(level => (
+                        <SelectItem key={level} value={level} className="capitalize">{level}</SelectItem>
                     ))}
                 </SelectContent>
             </Select>
@@ -90,18 +105,19 @@ export default function ClassCatalog() {
                         src={cls.image}
                         alt={cls.name}
                         fill
-                        objectFit="cover"
-                        className="rounded-t-lg"
+                        className="object-cover rounded-t-lg"
                         data-ai-hint={cls['data-ai-hint']}
                         />
                     </div>
                     </CardHeader>
                     <CardContent className="flex-grow p-6 space-y-2">
-                        <Badge variant="secondary" className="w-fit">{cls.category}</Badge>
-                        <CardTitle className="font-bold font-headline">{cls.name}</CardTitle>
+                        <div className="flex justify-between items-center">
+                          <Badge variant="secondary" className="w-fit">{cls.category}</Badge>
+                          <Badge variant="outline" className="capitalize">{cls.level}</Badge>
+                        </div>
+                        <CardTitle className="font-bold font-headline pt-2">{cls.name}</CardTitle>
                         <CardDescription>con {cls.teacherName}</CardDescription>
-                        <p className="text-sm text-muted-foreground pt-2">{cls.schedule}</p>
-                        <p className="text-sm">{cls.description}</p>
+                        <p className="text-sm pt-2">{cls.description}</p>
                     </CardContent>
                     <CardFooter className="flex justify-end items-center p-6">
                     <Button

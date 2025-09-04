@@ -7,6 +7,8 @@ export interface User {
   role: UserRole;
 }
 
+export type ClassLevel = 'principiante' | 'intermedio' | 'avanzado';
+
 export interface Class {
   id: string;
   name: string;
@@ -18,6 +20,7 @@ export interface Class {
   maxStudents: number;
   image: string;
   category: string;
+  level: ClassLevel;
   bookedStudents?: number;
   'data-ai-hint'?: string;
 }
