@@ -12,7 +12,7 @@ export default function AttendancePage() {
   const { user } = useAuth();
   const router = useRouter();
   const params = useParams();
-  const classId = Array.isArray(params.classId) ? params.classId[0] : params.classId;
+  const classId = params ? (Array.isArray(params.classId) ? params.classId[0] : params.classId as string) : '';
   
   const classData = MOCK_CLASSES.find(c => c.id === classId);
   // In a real app, you would fetch students booked for this specific class.
