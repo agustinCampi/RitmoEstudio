@@ -5,13 +5,14 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { DashboardHeader } from "@/components/dashboard-header";
 import { MOCK_CLASSES, MOCK_STUDENTS_PROFILES } from "@/lib/mock-data";
 import { Calendar, Users, BookUser } from "lucide-react";
+import { WeeklySchedule } from "@/components/dashboard/weekly-schedule";
 
 export default function DashboardPage() {
   const { user } = useAuth();
 
   const AdminDashboard = () => (
-    <>
-      <p className="text-muted-foreground mb-6">Aquí puedes gestionar todos los aspectos del estudio de baile.</p>
+    <div className="space-y-6">
+      <p className="text-muted-foreground">Aquí puedes gestionar todos los aspectos del estudio de baile.</p>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -44,14 +45,15 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-    </>
+      <WeeklySchedule classes={MOCK_CLASSES} />
+    </div>
   );
   
   const TeacherDashboard = () => {
     const assignedClasses = MOCK_CLASSES.filter(c => c.teacherId === user?.id);
     return (
-      <>
-        <p className="text-muted-foreground mb-6">Aquí puedes ver un resumen de tus clases y actividades.</p>
+     <div className="space-y-6">
+        <p className="text-muted-foreground">Aquí puedes ver un resumen de tus clases y actividades.</p>
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -74,16 +76,19 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </div>
-      </>
+        <WeeklySchedule classes={assignedClasses} />
+      </div>
     );
   }
 
   const StudentDashboard = () => {
      const myBookings = 2; // Mock data
-     const nextClass = MOCK_CLASSES[0]; // Mock data
+     const nextClass = MOCK_CLASSES.find(c => ["cls_salsa_1", "cls_hiphop_1"].includes(c.id)) || MOCK_CLASSES[0];
+     const myClasses = MOCK_CLASSES.filter(c => ["cls_salsa_1", "cls_hiphop_1"].includes(c.id));
+
     return (
-      <>
-        <p className="text-muted-foreground mb-6">¡Prepárate para bailar! Aquí tienes un resumen de tu actividad.</p>
+      <div className="space-y-6">
+        <p className="text-muted-foreground">¡Prepárate para bailar! Aquí tienes un resumen de tu actividad.</p>
          <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -106,8 +111,9 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </div>
-      </>
-    )
+        <WeeklySchedule classes={myClasses} />
+      </div>
+    );
   };
 
 
