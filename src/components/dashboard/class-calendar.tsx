@@ -3,8 +3,6 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import type { Class } from '@/lib/types';
-import { supabase } from '@/lib/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import { es } from 'date-fns/locale';
@@ -41,34 +39,12 @@ const parseScheduleToDayIndex = (schedule: string): number[] => {
 interface ClassCalendarProps {
     classes: Class[];
     highlightedClasses?: Class[];
+    loading?: boolean;
 }
 
-export function ClassCalendar({ classes: initialClasses, highlightedClasses = [] }: ClassCalendarProps) {
-  const { toast } = useToast();
+export function ClassCalendar({ classes, highlightedClasses = [], loading = false }: ClassCalendarProps) {
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [classes, setClasses] = useState<Class[]>(initialClasses);
-  const [loading, setLoading] = useState(true);
   
-  useEffect(() => {
-    const fetchClasses = async () => {
-      setLoading(true);
-      const { data, error } = await supabase.from('classes').select('*');
-      if (error) {
-        toast({ title: "Error", description: "No se pudieron cargar las clases para el calendario.", variant: "destructive" });
-      } else {
-        setClasses(data as Class[]);
-      }
-      setLoading(false);
-    };
-
-    // If initial classes are empty, fetch from Supabase. This covers the student/teacher case.
-    if (initialClasses.length === 0) {
-        fetchClasses();
-    } else {
-        setLoading(false);
-    }
-  }, [initialClasses, toast]);
-
   const highlightedClassIds = useMemo(() => new Set(highlightedClasses.map(c => c.id)), [highlightedClasses]);
 
   const classesByDate = useMemo(() => {
@@ -228,4 +204,3 @@ export function ClassCalendar({ classes: initialClasses, highlightedClasses = []
     </Card>
   );
 }
-

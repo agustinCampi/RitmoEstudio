@@ -1,9 +1,13 @@
+
 "use client";
 
 import Link from 'next/link';
-import { MOCK_CLASSES } from '@/lib/mock-data';
 import { useAuth } from '@/hooks/use-auth';
 import Image from "next/image";
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase/client';
+import { Class } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
 
 import {
   Card,
@@ -16,10 +20,54 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ClipboardCheck } from 'lucide-react';
+import { Skeleton } from '../ui/skeleton';
 
 export default function AssignedClasses() {
   const { user } = useAuth();
-  const assignedClasses = MOCK_CLASSES.filter(c => c.teacherId === user?.id);
+  const { toast } = useToast();
+  const [assignedClasses, setAssignedClasses] = useState<Class[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAssignedClasses = async () => {
+      if (!user) return;
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('classes')
+        .select('*')
+        .eq('teacherId', user.id);
+      
+      if (error) {
+        toast({ title: "Error", description: "No se pudieron cargar tus clases.", variant: "destructive" });
+      } else {
+        setAssignedClasses(data as Class[]);
+      }
+      setLoading(false);
+    };
+
+    fetchAssignedClasses();
+  }, [user, toast]);
+
+  if (loading) {
+    return (
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {[...Array(3)].map((_, i) => (
+          <Card key={i}>
+            <Skeleton className="h-48 w-full" />
+            <CardContent className="p-6 space-y-2">
+              <Skeleton className="h-4 w-1/4" />
+              <Skeleton className="h-6 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+            </CardContent>
+            <CardFooter className="flex justify-between items-center p-6">
+              <Skeleton className="h-6 w-1/3" />
+              <Skeleton className="h-10 w-1/2" />
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+    );
+  }
 
   if (assignedClasses.length === 0) {
     return (
@@ -39,10 +87,9 @@ export default function AssignedClasses() {
                 <Image
                     src={cls.image}
                     alt={cls.name}
-                    layout="fill"
-                    objectFit="cover"
-                    className="rounded-t-lg"
-                    data-ai-hint={cls['data-ai-hint']}
+                    fill
+                    className="object-cover rounded-t-lg"
+                    data-ai-hint="dance class"
                 />
              </div>
              </CardHeader>

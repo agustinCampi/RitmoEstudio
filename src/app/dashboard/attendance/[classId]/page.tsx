@@ -5,8 +5,10 @@ import { useAuth } from "@/hooks/use-auth";
 import { DashboardHeader } from "@/components/dashboard-header";
 import AttendanceTracker from "@/components/teacher/attendance-tracker";
 import { useRouter, useParams } from "next/navigation";
-import { useEffect } from "react";
-import { MOCK_CLASSES, MOCK_STUDENTS_PROFILES } from "@/lib/mock-data";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase/client";
+import { Class, User } from "@/lib/types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AttendancePage() {
   const { user } = useAuth();
@@ -14,10 +16,49 @@ export default function AttendancePage() {
   const params = useParams();
   const classId = params ? (Array.isArray(params.classId) ? params.classId[0] : params.classId as string) : '';
   
-  const classData = MOCK_CLASSES.find(c => c.id === classId);
-  // In a real app, you would fetch students booked for this specific class.
-  // Here, we just take a few mock students.
-  const studentsInClass = MOCK_STUDENTS_PROFILES.slice(0, 5);
+  const [classData, setClassData] = useState<Class | null>(null);
+  const [studentsInClass, setStudentsInClass] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchClassAndStudents = async () => {
+        if (!classId) return;
+        setLoading(true);
+
+        // Fetch class details
+        const { data: classInfo, error: classError } = await supabase
+            .from('classes')
+            .select('*')
+            .eq('id', classId)
+            .single();
+
+        if (classError || !classInfo) {
+            console.error("Error fetching class data:", classError);
+            setLoading(false);
+            return;
+        }
+        setClassData(classInfo as Class);
+
+        // In a real app, you would fetch students from a 'bookings' table.
+        // Here, we just fetch a few mock students for demonstration.
+        const { data: studentProfiles, error: studentError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('role', 'student')
+            .limit(5);
+
+        if (studentError) {
+             console.error("Error fetching students:", studentError);
+        } else {
+            setStudentsInClass(studentProfiles as User[]);
+        }
+
+        setLoading(false);
+    };
+
+    fetchClassAndStudents();
+  }, [classId]);
+
 
   useEffect(() => {
     if (user && user.role !== 'teacher') {
@@ -29,6 +70,32 @@ export default function AttendancePage() {
     return null;
   }
   
+  if (loading) {
+    return (
+        <div className="w-full">
+            <DashboardHeader title="Asistencia" />
+            <div className="px-4 sm:px-0 space-y-4">
+                <Skeleton className="h-10 w-1/3" />
+                <Skeleton className="h-8 w-1/2" />
+                <div className="space-y-4">
+                    {[...Array(3)].map((_, i) => (
+                        <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                            <div className="flex items-center gap-4">
+                                <Skeleton className="h-10 w-10 rounded-full" />
+                                <Skeleton className="h-6 w-32" />
+                            </div>
+                            <div className="flex gap-2">
+                                <Skeleton className="h-9 w-24" />
+                                <Skeleton className="h-9 w-24" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+  }
+
   if (!classData) {
     return (
         <div className="w-full">

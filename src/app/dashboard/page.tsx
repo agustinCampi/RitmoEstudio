@@ -1,15 +1,38 @@
+
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { DashboardHeader } from "@/components/dashboard-header";
-import { MOCK_CLASSES, MOCK_STUDENTS_PROFILES } from "@/lib/mock-data";
 import { Calendar, Users, BookUser } from "lucide-react";
 import { ClassCalendar } from "@/components/dashboard/class-calendar";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase/client";
+import { Class, User } from "@/lib/types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const [classes, setClasses] = useState<Class[]>([]);
+  const [students, setStudents] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      const [classesRes, studentsRes] = await Promise.all([
+        supabase.from('classes').select('*'),
+        supabase.from('users').select('*').eq('role', 'student')
+      ]);
+      
+      if (classesRes.data) setClasses(classesRes.data as Class[]);
+      if (studentsRes.data) setStudents(studentsRes.data as User[]);
+
+      setLoading(false);
+    }
+    fetchData();
+  }, []);
 
   const AdminDashboard = () => (
     <div className="space-y-6">
@@ -22,7 +45,7 @@ export default function DashboardPage() {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{MOCK_CLASSES.length}</div>
+              {loading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{classes.length}</div>}
               <p className="text-xs text-muted-foreground">Clases activas actualmente</p>
             </CardContent>
           </Card>
@@ -34,7 +57,7 @@ export default function DashboardPage() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{MOCK_STUDENTS_PROFILES.length}</div>
+              {loading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{students.length}</div>}
               <p className="text-xs text-muted-foreground">Alumnos registrados en el sistema</p>
             </CardContent>
           </Card>
@@ -45,17 +68,18 @@ export default function DashboardPage() {
             <BookUser className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">125</div>
+            {/* Placeholder - This would require a bookings table */}
+             {loading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">0</div>}
             <p className="text-xs text-muted-foreground">Reservas en el último mes</p>
           </CardContent>
         </Card>
       </div>
-      <ClassCalendar classes={MOCK_CLASSES} />
+      <ClassCalendar classes={classes} loading={loading} />
     </div>
   );
   
   const TeacherDashboard = () => {
-    const assignedClasses = MOCK_CLASSES.filter(c => c.teacherId === user?.id);
+    const assignedClasses = classes.filter(c => c.teacherId === user?.id);
     return (
      <div className="space-y-6">
         <p className="text-muted-foreground">Aquí puedes ver un resumen de tus clases y actividades.</p>
@@ -67,7 +91,7 @@ export default function DashboardPage() {
                 <Calendar className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{assignedClasses.length}</div>
+                 {loading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{assignedClasses.length}</div>}
                 <p className="text-xs text-muted-foreground">Clases que impartes esta semana</p>
               </CardContent>
             </Card>
@@ -79,21 +103,22 @@ export default function DashboardPage() {
                  <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-xl font-bold">{assignedClasses[0]?.name || 'Ninguna'}</div>
-                <p className="text-xs text-muted-foreground">{assignedClasses[0]?.schedule || 'No hay clases próximas'}</p>
+                 {loading ? <Skeleton className="h-6 w-3/4" /> : <div className="text-xl font-bold">{assignedClasses[0]?.name || 'Ninguna'}</div>}
+                 {loading ? <Skeleton className="h-4 w-1/2 mt-1" /> : <p className="text-xs text-muted-foreground">{assignedClasses[0]?.schedule || 'No hay clases próximas'}</p>}
               </CardContent>
             </Card>
           </Link>
         </div>
-        <ClassCalendar classes={assignedClasses} />
+        <ClassCalendar classes={assignedClasses} loading={loading} highlightedClasses={assignedClasses} />
       </div>
     );
   }
 
   const StudentDashboard = () => {
-     const myBookings = 2; // Mock data
-     const nextClass = MOCK_CLASSES.find(c => ["cls_salsa_1", "cls_hiphop_1"].includes(c.id)) || MOCK_CLASSES[0];
-     const myClasses = MOCK_CLASSES.filter(c => ["cls_salsa_1", "cls_hiphop_1"].includes(c.id));
+     // This would come from a 'bookings' table
+     const myBookingsCount = 0; 
+     const myClasses = classes.filter(c => c.bookedStudents && c.bookedStudents > 0); // Placeholder
+     const nextClass = myClasses[0];
 
     return (
       <div className="space-y-6">
@@ -106,7 +131,7 @@ export default function DashboardPage() {
                 <BookUser className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{myBookings}</div>
+                 {loading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{myBookingsCount}</div>}
                 <p className="text-xs text-muted-foreground">Clases para esta semana</p>
               </CardContent>
             </Card>
@@ -118,13 +143,13 @@ export default function DashboardPage() {
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-xl font-bold">{nextClass.name}</div>
-                  <p className="text-xs text-muted-foreground">con {nextClass.teacherName}</p>
+                  {loading ? <Skeleton className="h-6 w-3/4" /> : <div className="text-xl font-bold">{nextClass?.name || 'Explora el catálogo'}</div>}
+                  {loading ? <Skeleton className="h-4 w-1/2 mt-1" /> : <p className="text-xs text-muted-foreground">{nextClass ? `con ${nextClass.teacherName}` : 'Reserva una clase'}</p>}
                 </CardContent>
             </Card>
            </Link>
         </div>
-        <ClassCalendar classes={myClasses} />
+        <ClassCalendar classes={myClasses} highlightedClasses={myClasses} loading={loading} />
       </div>
     );
   };
