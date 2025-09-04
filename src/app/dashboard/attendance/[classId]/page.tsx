@@ -1,17 +1,20 @@
+
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
 import { DashboardHeader } from "@/components/dashboard-header";
 import AttendanceTracker from "@/components/teacher/attendance-tracker";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useEffect } from "react";
 import { MOCK_CLASSES, MOCK_STUDENTS_PROFILES } from "@/lib/mock-data";
 
-export default function AttendancePage({ params }: { params: { classId: string } }) {
+export default function AttendancePage() {
   const { user } = useAuth();
   const router = useRouter();
+  const params = useParams();
+  const classId = Array.isArray(params.classId) ? params.classId[0] : params.classId;
   
-  const classData = MOCK_CLASSES.find(c => c.id === params.classId);
+  const classData = MOCK_CLASSES.find(c => c.id === classId);
   // In a real app, you would fetch students booked for this specific class.
   // Here, we just take a few mock students.
   const studentsInClass = MOCK_STUDENTS_PROFILES.slice(0, 5);
@@ -42,7 +45,7 @@ export default function AttendancePage({ params }: { params: { classId: string }
     <div className="w-full">
       <DashboardHeader title={`Asistencia: ${classData.name}`} />
       <div className="px-4 sm:px-0">
-        <AttendanceTracker classId={params.classId} students={studentsInClass} />
+        <AttendanceTracker classId={classId} students={studentsInClass} />
       </div>
     </div>
   );
