@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { MOCK_CLASSES } from '@/lib/mock-data';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
@@ -14,11 +14,17 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Book, Check } from 'lucide-react';
+import { Book, Check, Search } from 'lucide-react';
+import { Input } from '../ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+
+const categories = ["Todas", ...new Set(MOCK_CLASSES.map(c => c.category))];
 
 export default function ClassCatalog() {
   const { toast } = useToast();
   const [bookedClasses, setBookedClasses] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('Todas');
 
   const handleBookClass = (classId: string, className: string) => {
     if (bookedClasses.includes(classId)) return;
@@ -32,59 +38,100 @@ export default function ClassCatalog() {
       description: `Te has inscrito en la clase "${className}".`,
     });
   };
+  
+  const filteredClasses = useMemo(() => {
+    return MOCK_CLASSES.filter(cls => {
+      const matchesCategory = selectedCategory === 'Todas' || cls.category === selectedCategory;
+      const matchesSearch = searchTerm === '' || 
+                            cls.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                            cls.description.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesCategory && matchesSearch;
+    });
+  }, [searchTerm, selectedCategory]);
 
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {MOCK_CLASSES.map(cls => {
-        const isBooked = bookedClasses.includes(cls.id);
-        const isFull = cls.bookedStudents >= cls.maxStudents;
-        
-        return (
-          <Card key={cls.id} className="flex flex-col bg-card hover:bg-muted/50 transition-colors">
-            <CardHeader className="p-0">
-              <div className="relative h-48 w-full">
-                <Image
-                  src={cls.image}
-                  alt={cls.name}
-                  layout="fill"
-                  objectFit="cover"
-                  className="rounded-t-lg"
-                  data-ai-hint={cls['data-ai-hint']}
-                />
-              </div>
-            </CardHeader>
-            <CardContent className="flex-grow p-6 space-y-2">
-                <Badge variant="secondary" className="w-fit">{cls.category}</Badge>
-                <CardTitle className="font-bold">{cls.name}</CardTitle>
-                <CardDescription>con {cls.teacherName}</CardDescription>
-                <p className="text-sm text-muted-foreground pt-2">{cls.schedule}</p>
-                <p className="text-sm">{cls.description}</p>
-            </CardContent>
-            <CardFooter className="flex justify-between items-center p-6">
-              <div>
-                <span className="font-bold">{cls.bookedStudents} / {cls.maxStudents}</span>
-                <span className="text-sm text-muted-foreground"> cupos</span>
-              </div>
-              <Button
-                onClick={() => handleBookClass(cls.id, cls.name)}
-                disabled={isBooked || isFull}
-              >
-                {isBooked ? (
-                  <>
-                    <Check className="mr-2 h-4 w-4" /> Inscrito
-                  </>
-                ) : isFull ? (
-                  'Clase Llena'
-                ) : (
-                  <>
-                    <Book className="mr-2 h-4 w-4" /> Reservar
-                  </>
-                )}
-              </Button>
-            </CardFooter>
-          </Card>
-        );
-      })}
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Input 
+            placeholder="Buscar por nombre o descripción..."
+            className="pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">Filtrar por:</span>
+            <Select onValueChange={setSelectedCategory} defaultValue={selectedCategory}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                    <SelectValue placeholder="Categoría" />
+                </SelectTrigger>
+                <SelectContent>
+                    {categories.map(category => (
+                        <SelectItem key={category} value={category}>{category}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        </div>
+      </div>
+      
+      {filteredClasses.length > 0 ? (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {filteredClasses.map(cls => {
+                const isBooked = bookedClasses.includes(cls.id);
+                const isFull = (cls.bookedStudents || 0) >= cls.maxStudents;
+                
+                return (
+                <Card key={cls.id} className="flex flex-col bg-card hover:bg-muted/50 transition-colors">
+                    <CardHeader className="p-0">
+                    <div className="relative h-48 w-full">
+                        <Image
+                        src={cls.image}
+                        alt={cls.name}
+                        fill
+                        objectFit="cover"
+                        className="rounded-t-lg"
+                        data-ai-hint={cls['data-ai-hint']}
+                        />
+                    </div>
+                    </CardHeader>
+                    <CardContent className="flex-grow p-6 space-y-2">
+                        <Badge variant="secondary" className="w-fit">{cls.category}</Badge>
+                        <CardTitle className="font-bold font-headline">{cls.name}</CardTitle>
+                        <CardDescription>con {cls.teacherName}</CardDescription>
+                        <p className="text-sm text-muted-foreground pt-2">{cls.schedule}</p>
+                        <p className="text-sm">{cls.description}</p>
+                    </CardContent>
+                    <CardFooter className="flex justify-end items-center p-6">
+                    <Button
+                        onClick={() => handleBookClass(cls.id, cls.name)}
+                        disabled={isBooked || isFull}
+                        className="w-full sm:w-auto"
+                    >
+                        {isBooked ? (
+                        <>
+                            <Check /> Inscrito
+                        </>
+                        ) : isFull ? (
+                        'Clase Llena'
+                        ) : (
+                        <>
+                            <Book /> Reservar
+                        </>
+                        )}
+                    </Button>
+                    </CardFooter>
+                </Card>
+                );
+            })}
+        </div>
+         ) : (
+        <div className="text-center py-12 border-2 border-dashed rounded-lg">
+            <h3 className="font-headline text-2xl font-bold">No se encontraron clases</h3>
+            <p className="text-muted-foreground mt-2">Prueba a cambiar los filtros o el término de búsqueda.</p>
+        </div>
+      )}
     </div>
   );
 }
