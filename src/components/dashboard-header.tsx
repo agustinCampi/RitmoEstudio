@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -21,12 +20,14 @@ import { Logo } from './logo';
 
 const adminNavItems = [
   { href: '/dashboard', icon: Home, label: 'Inicio' },
-  { href: '/dashboard/classes', icon: Calendar, label: 'Gestionar Clases' },
+  { href: '/dashboard/calendar', icon: Calendar, label: 'Calendario' },
+  { href: '/dashboard/classes', icon: Swords, label: 'Gestionar Clases' },
   { href: '/dashboard/students', icon: Users, label: 'Gestionar Alumnos' },
 ];
 
 const teacherNavItems = [
   { href: '/dashboard', icon: Home, label: 'Inicio' },
+  { href: '/dashboard/calendar', icon: Calendar, label: 'Calendario' },
   { href: '/dashboard/assigned-classes', icon: ClipboardCheck, label: 'Mis Clases Asignadas' },
   { href: '/dashboard/classes', icon: Swords, label: 'Catálogo de Clases' },
   { href: '/dashboard/my-classes', icon: BookUser, label: 'Mis Clases Reservadas' },
@@ -34,6 +35,7 @@ const teacherNavItems = [
 
 const studentNavItems = [
   { href: '/dashboard', icon: Home, label: 'Inicio' },
+  { href: '/dashboard/calendar', icon: Calendar, label: 'Calendario' },
   { href: '/dashboard/classes', icon: Swords, label: 'Catálogo de Clases' },
   { href: '/dashboard/my-classes', icon: BookUser, label: 'Mis Clases' },
 ];
