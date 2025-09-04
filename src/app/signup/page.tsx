@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm, zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useAuth, UserRole } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -18,37 +17,38 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Logo } from '@/components/logo';
 
-const loginSchema = z.object({
+const signupSchema = z.object({
+  name: z.string().min(2, { message: "El nombre debe tener al menos 2 caracteres." }),
   email: z.string().email({ message: "Por favor, introduce un email válido." }),
-  password: z.string().min(1, { message: "La contraseña es obligatoria." }),
+  password: z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres." }),
 });
 
-type LoginFormValues = z.infer<typeof loginSchema>;
+type SignupFormValues = z.infer<typeof signupSchema>;
 
-export default function LoginPage() {
+export default function SignupPage() {
   const router = useRouter();
   const { login } = useAuth();
-  const [role, setRole] = useState<UserRole>('student');
+  const { toast } = useToast();
 
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
+  const form = useForm<SignupFormValues>({
+    resolver: zodResolver(signupSchema),
     defaultValues: {
+      name: '',
       email: '',
       password: '',
     },
   });
 
-  const onSubmit = (data: LoginFormValues) => {
-    login(role, data.email);
+  const onSubmit = (data: SignupFormValues) => {
+    // Simulate signup and login
+    console.log("Webhook a Make.com (Crear Alumno):", { name: data.name, email: data.email });
+    toast({
+      title: "¡Registro exitoso!",
+      description: "Tu cuenta de alumno ha sido creada.",
+    });
+    login('student', data.email);
     router.push('/dashboard');
   };
 
@@ -59,11 +59,22 @@ export default function LoginPage() {
           <div className="mx-auto mb-4">
             <Logo />
           </div>
-          <h1 className="font-headline text-4xl">Bienvenido a RitmoEstudio</h1>
-          <CardDescription>Inicia sesión para gestionar tus clases de baile.</CardDescription>
+          <h1 className="font-headline text-4xl">Crea tu Cuenta</h1>
+          <CardDescription>Regístrate para empezar a reservar tus clases de baile.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nombre Completo</Label>
+              <Input
+                id="name"
+                placeholder="Tu Nombre"
+                {...form.register('name')}
+              />
+              {form.formState.errors.name && (
+                <p className="text-sm text-red-600">{form.formState.errors.name.message}</p>
+              )}
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -79,31 +90,18 @@ export default function LoginPage() {
             <div className="space-y-2">
               <Label htmlFor="password">Contraseña</Label>
               <Input id="password" type="password" {...form.register('password')} />
-              {form.formState.errors.password && (
+               {form.formState.errors.password && (
                 <p className="text-sm text-red-600">{form.formState.errors.password.message}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>Iniciar sesión como (simulación)</Label>
-              <Select onValueChange={(value) => setRole(value as UserRole)} defaultValue={role}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona un rol" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="student">Alumno</SelectItem>
-                  <SelectItem value="teacher">Profesor</SelectItem>
-                  <SelectItem value="admin">Administrador</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
             <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-              Iniciar Sesión
+              Crear Cuenta
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
-            ¿No tienes una cuenta?{' '}
-            <Link href="/signup" className="underline text-primary">
-              Regístrate
+            ¿Ya tienes una cuenta?{' '}
+            <Link href="/" className="underline text-primary">
+              Inicia Sesión
             </Link>
           </div>
         </CardContent>
