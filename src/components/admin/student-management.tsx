@@ -1,13 +1,14 @@
 
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { MOCK_STUDENTS_PROFILES } from '@/lib/mock-data';
-import type { StudentProfile } from '@/lib/types';
+import type { User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase/client';
+import type { Database } from '@/lib/types/supabase';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -19,6 +20,7 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
+  DialogClose,
 } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -41,40 +43,86 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 const studentSchema = z.object({
   name: z.string().min(2, "El nombre es obligatorio."),
   email: z.string().email("El email no es válido."),
+  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres."),
 });
 
 type StudentFormValues = z.infer<typeof studentSchema>;
 
 export default function StudentManagement() {
   const { toast } = useToast();
-  const [students, setStudents] = useState<StudentProfile[]>(MOCK_STUDENTS_PROFILES);
+  const [students, setStudents] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isFormOpen, setFormOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentSchema),
-    defaultValues: { name: '', email: '' },
+    defaultValues: { name: '', email: '', password: '' },
   });
   
-  const onSubmit = (data: StudentFormValues) => {
-    const newStudent: StudentProfile = {
-      id: `usr_student_${Date.now()}`,
-      ...data,
-      role: 'student',
-      joinedDate: new Date(),
-      bookedClasses: 0,
+  useEffect(() => {
+    const fetchStudents = async () => {
+        setLoading(true);
+        const { data, error } = await supabase.from('users').select('*').eq('role', 'student');
+        if (error) {
+            toast({ title: "Error", description: "No se pudieron cargar los alumnos.", variant: "destructive" });
+            console.error(error);
+        } else {
+            setStudents(data as User[]);
+        }
+        setLoading(false);
     };
-    console.log('Webhook a Make.com (Añadir Alumno):', newStudent);
-    setStudents([newStudent, ...students]);
-    toast({ title: "Alumno añadido", description: `${data.name} ha sido añadido al sistema.` });
-    setFormOpen(false);
-    form.reset();
+    fetchStudents();
+  }, [toast]);
+  
+  const onSubmit = async (data: StudentFormValues) => {
+    // 1. Create user in Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+    });
+
+    if (authError || !authData.user) {
+      toast({ title: "Error en autenticación", description: authError?.message || "No se pudo crear el usuario.", variant: "destructive" });
+      return;
+    }
+
+    // 2. Create profile in public.users table
+    const newUser: Omit<User, 'created_at'> = {
+      id: authData.user.id,
+      name: data.name,
+      email: data.email,
+      role: 'student',
+    };
+    
+    const { data: newStudent, error: profileError } = await supabase
+      .from('users')
+      .insert(newUser)
+      .select()
+      .single();
+
+    if (profileError) {
+       toast({ title: "Error al crear perfil", description: profileError.message, variant: "destructive" });
+    } else {
+      setStudents([newStudent as User, ...students]);
+      toast({ title: "Alumno añadido", description: `${data.name} ha sido añadido al sistema.` });
+      setFormOpen(false);
+      form.reset();
+    }
   };
 
-  const handleDelete = (studentId: string) => {
-    console.log('Webhook a Make.com (Eliminar Alumno):', { id: studentId });
-    setStudents(students.filter(s => s.id !== studentId));
-    toast({ title: "Alumno eliminado", variant: "destructive" });
+  const handleDelete = async (student: User) => {
+    // This is a complex operation, ideally done via a Supabase Edge Function with admin rights.
+    // For simplicity here, we'll just delete from the `users` table.
+    // Deleting from `auth.users` from the client is protected.
+    
+    const { error } = await supabase.from('users').delete().eq('id', student.id);
+    if (error) {
+       toast({ title: "Error al eliminar", description: error.message, variant: "destructive" });
+    } else {
+      setStudents(students.filter(s => s.id !== student.id));
+      toast({ title: "Alumno eliminado", description: `${student.name} ha sido eliminado. Aún debe ser eliminado de Auth.`, variant: "destructive" });
+    }
   };
   
   const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('');
@@ -85,6 +133,10 @@ export default function StudentManagement() {
       student.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [searchTerm, students]);
+
+  if (loading) {
+    return <div className="text-center py-12">Cargando alumnos...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -109,8 +161,18 @@ export default function StudentManagement() {
                           <Input id="email" type="email" {...form.register('email')} />
                           {form.formState.errors.email && <p className="text-sm text-destructive mt-1">{form.formState.errors.email.message}</p>}
                       </div>
+                      <div>
+                          <Label htmlFor="password">Contraseña</Label>
+                          <Input id="password" type="password" {...form.register('password')} />
+                          {form.formState.errors.password && <p className="text-sm text-destructive mt-1">{form.formState.errors.password.message}</p>}
+                      </div>
                       <DialogFooter>
-                          <Button type="submit">Añadir Alumno</Button>
+                        <DialogClose asChild>
+                            <Button variant="outline">Cancelar</Button>
+                        </DialogClose>
+                        <Button type="submit" disabled={form.formState.isSubmitting}>
+                            {form.formState.isSubmitting ? "Añadiendo..." : "Añadir Alumno"}
+                        </Button>
                       </DialogFooter>
                   </form>
               </DialogContent>
@@ -158,37 +220,29 @@ export default function StudentManagement() {
                                     <AlertDialogHeader>
                                     <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                        Esta acción no se puede deshacer. Se eliminará el perfil del alumno permanentemente.
+                                        Esta acción no se puede deshacer. Se eliminará el perfil del alumno de la tabla de perfiles.
                                     </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
                                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDelete(student.id)} className="bg-destructive hover:bg-destructive/90">Eliminar</AlertDialogAction>
+                                    <AlertDialogAction onClick={() => handleDelete(student)} className="bg-destructive hover:bg-destructive/90">Eliminar</AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
                         </DropdownMenuContent>
                     </DropdownMenu>
                   </CardHeader>
-                  <CardContent className="space-y-3 text-sm">
-                     <div className="flex items-center gap-2 text-muted-foreground">
-                        <CalendarDays className="h-4 w-4" />
-                        <span>Miembro desde el {format(student.joinedDate, "d/MM/yy", { locale: es })}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                        <BookUser className="h-4 w-4" />
-                        <span>{student.bookedClasses} clases reservadas</span>
-                    </div>
-                  </CardContent>
                 </Card>
               ))}
             </div>
         ) : (
             <div className="text-center py-12 border-2 border-dashed rounded-lg">
                 <h3 className="font-headline text-2xl font-bold">No se encontraron alumnos</h3>
-                <p className="text-muted-foreground mt-2">Prueba con otro término de búsqueda.</p>
+                <p className="text-muted-foreground mt-2">Prueba con otro término de búsqueda o añade un nuevo alumno.</p>
             </div>
         )}
     </div>
   );
 }
+
+    
