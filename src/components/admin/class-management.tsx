@@ -5,8 +5,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { MOCK_USERS } from '@/lib/mock-data';
-import type { Class, ClassLevel } from '@/lib/types';
+import type { Class, ClassLevel, User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase/client';
 import type { Database } from '@/lib/types/supabase';
@@ -60,13 +59,13 @@ const classSchema = z.object({
 
 type ClassFormValues = z.infer<typeof classSchema>;
 
-const teachers = MOCK_USERS.filter(u => u.role === 'teacher');
 const levels: (ClassLevel | 'Todos')[] = ["Todos", "principiante", "intermedio", "avanzado"];
 
 
 export default function ClassManagement() {
   const { toast } = useToast();
   const [classes, setClasses] = useState<Class[]>([]);
+  const [teachers, setTeachers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFormOpen, setFormOpen] = useState(false);
   const [editingClass, setEditingClass] = useState<Class | null>(null);
@@ -80,20 +79,30 @@ export default function ClassManagement() {
   });
 
   useEffect(() => {
-    const fetchClasses = async () => {
+    const fetchData = async () => {
       setLoading(true);
-      const { data, error } = await supabase.from('classes').select('*');
-      if (error) {
+      
+      const { data: classesData, error: classesError } = await supabase.from('classes').select('*');
+      if (classesError) {
         toast({ title: "Error", description: "No se pudieron cargar las clases.", variant: "destructive" });
-        console.error(error);
+        console.error(classesError);
       } else {
-        setClasses(data as Class[]);
-        const uniqueCategories = ["Todas", ...new Set(data.map((c: Class) => c.category))];
+        setClasses(classesData as Class[]);
+        const uniqueCategories = ["Todas", ...new Set(classesData.map((c: Class) => c.category))];
         setCategories(uniqueCategories);
       }
+      
+      const { data: teachersData, error: teachersError } = await supabase.from('users').select('*').eq('role', 'teacher');
+      if (teachersError) {
+        toast({ title: "Error", description: "No se pudieron cargar los profesores.", variant: "destructive" });
+        console.error(teachersError);
+      } else {
+        setTeachers(teachersData as User[]);
+      }
+
       setLoading(false);
     };
-    fetchClasses();
+    fetchData();
   }, [toast]);
   
   const handleOpenForm = (cls: Class | null = null) => {
@@ -137,7 +146,7 @@ export default function ClassManagement() {
       }
     } else {
       // Create class in Supabase
-      const newClassPayload: Database['public']['Tables']['classes']['Insert'] = {
+      const newClassPayload: Omit<Database['public']['Tables']['classes']['Insert'], 'id' | 'created_at'> = {
         ...data,
         teacherName,
         image: `https://picsum.photos/600/400?random=${Date.now()}`,
