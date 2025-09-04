@@ -170,7 +170,7 @@ export default function ClassManagement() {
   };
   
   return (
-    <Card>
+    <Card className="border-0">
        <CardHeader>
         <div className="flex items-center justify-between">
             <CardTitle>Lista de Clases</CardTitle>
@@ -219,7 +219,7 @@ export default function ClassManagement() {
                        <NotifyStudentsDialog classId={cls.id} />
                        <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600">
+                            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:text-red-500">
                               <Trash2 className="mr-2 h-4 w-4" /> Eliminar
                             </DropdownMenuItem>
                           </AlertDialogTrigger>
@@ -254,12 +254,12 @@ export default function ClassManagement() {
               <div>
                 <Label htmlFor="name">Nombre de la Clase</Label>
                 <Input id="name" {...form.register('name')} />
-                {form.formState.errors.name && <p className="text-sm text-red-600">{form.formState.errors.name.message}</p>}
+                {form.formState.errors.name && <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>}
               </div>
               <div>
                 <Label htmlFor="description">Descripción</Label>
                 <Textarea id="description" {...form.register('description')} />
-                {form.formState.errors.description && <p className="text-sm text-red-600">{form.formState.errors.description.message}</p>}
+                {form.formState.errors.description && <p className="text-sm text-destructive">{form.formState.errors.description.message}</p>}
               </div>
               <div>
                 <Label htmlFor="teacherId">Profesor</Label>
@@ -269,7 +269,7 @@ export default function ClassManagement() {
                     {teachers.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                 {form.formState.errors.teacherId && <p className="text-sm text-red-600">{form.formState.errors.teacherId.message}</p>}
+                 {form.formState.errors.teacherId && <p className="text-sm text-destructive">{form.formState.errors.teacherId.message}</p>}
               </div>
               <div>
                 <Label htmlFor="category">Categoría</Label>
@@ -282,23 +282,23 @@ export default function ClassManagement() {
                     <SelectItem value="Baile Moderno">Baile Moderno</SelectItem>
                   </SelectContent>
                 </Select>
-                 {form.formState.errors.category && <p className="text-sm text-red-600">{form.formState.errors.category.message}</p>}
+                 {form.formState.errors.category && <p className="text-sm text-destructive">{form.formState.errors.category.message}</p>}
               </div>
               <div>
                 <Label htmlFor="schedule">Horario</Label>
                 <Input id="schedule" placeholder="Ej: Lunes y Miércoles, 18:00 - 19:00" {...form.register('schedule')} />
-                {form.formState.errors.schedule && <p className="text-sm text-red-600">{form.formState.errors.schedule.message}</p>}
+                {form.formState.errors.schedule && <p className="text-sm text-destructive">{form.formState.errors.schedule.message}</p>}
               </div>
               <div className="grid grid-cols-2 gap-4">
                  <div>
                     <Label htmlFor="duration">Duración (min)</Label>
                     <Input id="duration" type="number" {...form.register('duration')} />
-                    {form.formState.errors.duration && <p className="text-sm text-red-600">{form.formState.errors.duration.message}</p>}
+                    {form.formState.errors.duration && <p className="text-sm text-destructive">{form.formState.errors.duration.message}</p>}
                  </div>
                  <div>
                     <Label htmlFor="maxStudents">Cupos máximos</Label>
                     <Input id="maxStudents" type="number" {...form.register('maxStudents')} />
-                    {form.formState.errors.maxStudents && <p className="text-sm text-red-600">{form.formState.errors.maxStudents.message}</p>}
+                    {form.formState.errors.maxStudents && <p className="text-sm text-destructive">{form.formState.errors.maxStudents.message}</p>}
                  </div>
               </div>
               <DialogFooter>

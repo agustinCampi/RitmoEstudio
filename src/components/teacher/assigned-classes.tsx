@@ -23,8 +23,8 @@ export default function AssignedClasses() {
 
   if (assignedClasses.length === 0) {
     return (
-        <div className="text-center py-12">
-            <h3 className="font-headline text-2xl">No tienes clases asignadas</h3>
+        <div className="text-center py-12 border-2 border-dashed rounded-lg">
+            <h3 className="font-headline text-2xl font-bold">No tienes clases asignadas</h3>
             <p className="text-muted-foreground mt-2">Contacta al administrador para que te asigne a nuevas clases.</p>
         </div>
     )
@@ -33,9 +33,9 @@ export default function AssignedClasses() {
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {assignedClasses.map(cls => (
-        <Card key={cls.id} className="flex flex-col">
-           <CardHeader>
-             <div className="relative h-40 w-full mb-4">
+        <Card key={cls.id} className="flex flex-col bg-card hover:bg-muted/50 transition-colors">
+           <CardHeader className="p-0">
+             <div className="relative h-48 w-full">
                 <Image
                     src={cls.image}
                     alt={cls.name}
@@ -45,14 +45,14 @@ export default function AssignedClasses() {
                     data-ai-hint={cls['data-ai-hint']}
                 />
              </div>
-            <CardTitle className="font-headline">{cls.name}</CardTitle>
-            <Badge variant="secondary" className="w-fit">{cls.category}</Badge>
-            <CardDescription>{cls.schedule}</CardDescription>
-          </CardHeader>
-          <CardContent className="flex-grow">
-            <p className="text-sm text-muted-foreground">{cls.description}</p>
-          </CardContent>
-          <CardFooter className="flex justify-between items-center">
+             </CardHeader>
+             <CardContent className="flex-grow p-6 space-y-2">
+                <Badge variant="secondary" className="w-fit">{cls.category}</Badge>
+                <CardTitle className="font-bold">{cls.name}</CardTitle>
+                <CardDescription>{cls.schedule}</CardDescription>
+                <p className="text-sm text-muted-foreground pt-2">{cls.description}</p>
+            </CardContent>
+          <CardFooter className="flex justify-between items-center p-6">
             <div>
               <span className="font-bold">{cls.bookedStudents} / {cls.maxStudents}</span>
               <span className="text-sm text-muted-foreground"> alumnos</span>

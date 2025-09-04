@@ -54,12 +54,12 @@ export default function LoginPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background p-4">
-      <Card className="w-full max-w-md shadow-2xl">
+      <Card className="w-full max-w-md border-0 bg-transparent shadow-none sm:border sm:bg-card sm:shadow-2xl">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4">
             <Logo />
           </div>
-          <h1 className="font-headline text-4xl">Bienvenido a RitmoEstudio</h1>
+          <h1 className="font-headline text-4xl font-bold">Bienvenido a RitmoEstudio</h1>
           <CardDescription>Inicia sesión para gestionar tus clases de baile.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -73,14 +73,14 @@ export default function LoginPage() {
                 {...form.register('email')}
               />
               {form.formState.errors.email && (
-                <p className="text-sm text-red-600">{form.formState.errors.email.message}</p>
+                <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
               )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Contraseña</Label>
               <Input id="password" type="password" {...form.register('password')} />
               {form.formState.errors.password && (
-                <p className="text-sm text-red-600">{form.formState.errors.password.message}</p>
+                <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
               )}
             </div>
             <div className="space-y-2">

@@ -46,7 +46,7 @@ export default function MyClasses() {
   if (myBookings.length === 0) {
     return (
         <div className="text-center py-12 border-2 border-dashed rounded-lg">
-            <h3 className="font-headline text-2xl">Aún no tienes clases</h3>
+            <h3 className="font-headline text-2xl font-bold">Aún no tienes clases</h3>
             <p className="text-muted-foreground mt-2">Explora nuestro catálogo y reserva tu primera clase para empezar a bailar.</p>
         </div>
     )
@@ -59,7 +59,7 @@ export default function MyClasses() {
           <CardHeader>
             <div className="flex justify-between items-start">
                 <div>
-                    <CardTitle className="font-headline">{cls.name}</CardTitle>
+                    <CardTitle className="font-headline font-bold">{cls.name}</CardTitle>
                     <CardDescription>con {cls.teacherName}</CardDescription>
                 </div>
                 <AlertDialog>

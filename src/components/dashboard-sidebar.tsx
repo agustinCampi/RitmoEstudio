@@ -12,12 +12,9 @@ import {
   Home,
   Users,
   Calendar,
-  ClipboardCheck,
   BookUser,
   LogOut,
   Swords,
-  Music,
-  Heart,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { Logo } from '@/components/logo';
@@ -41,12 +38,6 @@ const studentNavItems = [
   { href: '/dashboard/my-classes', icon: BookUser, label: 'Mis Clases' },
 ];
 
-const navIcons = {
-  'Danza Clásica': Music,
-  'Danza Urbana': Swords,
-  'Ritmos Latinos': Heart,
-};
-
 export default function DashboardSidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
@@ -66,7 +57,7 @@ export default function DashboardSidebar() {
             href="/dashboard"
             className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
           >
-            <WindIcon className="h-4 w-4 transition-all group-hover:scale-110" />
+            <Logo className="h-4 w-4" justIcon={true} />
             <span className="sr-only">RitmoEstudio</span>
           </Link>
 
@@ -108,24 +99,3 @@ export default function DashboardSidebar() {
     </aside>
   );
 }
-
-function WindIcon(props: React.SVGProps<SVGSVGElement>) {
-    return (
-      <svg
-        {...props}
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2" />
-        <path d="M9.6 4.6A2 2 0 1 1 11 8H2" />
-        <path d="M12.6 19.4A2 2 0 1 0 14 16H2" />
-      </svg>
-    )
-  }

@@ -86,7 +86,7 @@ export default function StudentManagement() {
   const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('');
 
   return (
-    <Card>
+    <Card className="border-0">
       <CardHeader>
         <div className="flex items-center justify-between">
             <CardTitle>Lista de Alumnos</CardTitle>
@@ -102,12 +102,12 @@ export default function StudentManagement() {
                         <div>
                             <Label htmlFor="name">Nombre Completo</Label>
                             <Input id="name" {...form.register('name')} />
-                            {form.formState.errors.name && <p className="text-sm text-red-600 mt-1">{form.formState.errors.name.message}</p>}
+                            {form.formState.errors.name && <p className="text-sm text-destructive mt-1">{form.formState.errors.name.message}</p>}
                         </div>
                         <div>
                             <Label htmlFor="email">Email</Label>
                             <Input id="email" type="email" {...form.register('email')} />
-                            {form.formState.errors.email && <p className="text-sm text-red-600 mt-1">{form.formState.errors.email.message}</p>}
+                            {form.formState.errors.email && <p className="text-sm text-destructive mt-1">{form.formState.errors.email.message}</p>}
                         </div>
                         <DialogFooter>
                             <Button type="submit">Añadir Alumno</Button>
@@ -152,7 +152,7 @@ export default function StudentManagement() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <AlertDialogTrigger asChild>
-                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600">
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:text-red-500">
                                     <Trash2 className="mr-2 h-4 w-4" /> Eliminar
                                 </DropdownMenuItem>
                             </AlertDialogTrigger>

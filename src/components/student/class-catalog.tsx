@@ -40,9 +40,9 @@ export default function ClassCatalog() {
         const isFull = cls.bookedStudents >= cls.maxStudents;
         
         return (
-          <Card key={cls.id} className="flex flex-col">
-            <CardHeader>
-              <div className="relative h-40 w-full mb-4">
+          <Card key={cls.id} className="flex flex-col bg-card hover:bg-muted/50 transition-colors">
+            <CardHeader className="p-0">
+              <div className="relative h-48 w-full">
                 <Image
                   src={cls.image}
                   alt={cls.name}
@@ -51,16 +51,16 @@ export default function ClassCatalog() {
                   className="rounded-t-lg"
                   data-ai-hint={cls['data-ai-hint']}
                 />
-                <Badge className="absolute top-2 right-2">{cls.category}</Badge>
               </div>
-              <CardTitle className="font-headline">{cls.name}</CardTitle>
-              <CardDescription>con {cls.teacherName}</CardDescription>
             </CardHeader>
-            <CardContent className="flex-grow">
-              <p className="text-sm text-muted-foreground mb-2">{cls.schedule}</p>
-              <p className="text-sm">{cls.description}</p>
+            <CardContent className="flex-grow p-6 space-y-2">
+                <Badge variant="secondary" className="w-fit">{cls.category}</Badge>
+                <CardTitle className="font-bold">{cls.name}</CardTitle>
+                <CardDescription>con {cls.teacherName}</CardDescription>
+                <p className="text-sm text-muted-foreground pt-2">{cls.schedule}</p>
+                <p className="text-sm">{cls.description}</p>
             </CardContent>
-            <CardFooter className="flex justify-between items-center">
+            <CardFooter className="flex justify-between items-center p-6">
               <div>
                 <span className="font-bold">{cls.bookedStudents} / {cls.maxStudents}</span>
                 <span className="text-sm text-muted-foreground"> cupos</span>

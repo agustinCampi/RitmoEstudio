@@ -55,7 +55,7 @@ export default function AttendanceTracker({ classId, students }: AttendanceTrack
 
 
   return (
-    <Card>
+    <Card className="border-0">
       <CardHeader>
         <CardTitle>Lista de Alumnos Inscritos</CardTitle>
         <CardDescription>
@@ -80,7 +80,7 @@ export default function AttendanceTracker({ classId, students }: AttendanceTrack
                     size="sm"
                     variant={status === 'presente' ? 'default' : 'outline'}
                     onClick={() => handleMarkAttendance(student.id, student.name, 'presente')}
-                    className="bg-green-600 text-white data-[variant=outline]:bg-transparent data-[variant=outline]:text-green-600 hover:bg-green-700 border-green-600"
+                    className="border-green-600 text-green-500 hover:bg-green-600 hover:text-white"
                   >
                     <Check className="mr-2 h-4 w-4" />
                     Presente

@@ -13,9 +13,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import Link from 'next/link';
-import { Home, Users, Calendar, BookUser, Swords, LogOut, PanelLeft, WindIcon } from 'lucide-react';
+import { Home, Users, Calendar, BookUser, Swords, LogOut, PanelLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
+import { Logo } from './logo';
 
 const adminNavItems = [
   { href: '/dashboard', icon: Home, label: 'Inicio' },
@@ -64,13 +65,9 @@ export function DashboardHeader({ title }: { title: string }) {
           </SheetTrigger>
           <SheetContent side="left" className="sm:max-w-xs">
             <nav className="grid gap-6 text-lg font-medium">
-              <Link
-                href="#"
-                className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
-              >
-                <WindIcon className="h-5 w-5 transition-all group-hover:scale-110" />
-                <span className="sr-only">RitmoEstudio</span>
-              </Link>
+                <Link href="#" className="flex items-center gap-2 font-semibold">
+                    <Logo />
+                </Link>
               {navItems.map((item) => (
                 <Link
                   key={item.href}
@@ -93,7 +90,7 @@ export function DashboardHeader({ title }: { title: string }) {
             </nav>
           </SheetContent>
         </Sheet>
-      <h1 className="font-headline text-2xl md:text-3xl">{title}</h1>
+      <h1 className="font-headline text-2xl md:text-3xl font-bold">{title}</h1>
       <div className="ml-auto flex items-center gap-4">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -123,4 +120,3 @@ export function DashboardHeader({ title }: { title: string }) {
     </header>
   );
 }
-
