@@ -8,14 +8,6 @@ import { MOCK_CLASSES, MOCK_USERS } from '@/lib/mock-data';
 import type { Class, ClassLevel } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -48,8 +40,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, MoreHorizontal, Trash2, Edit, Bell } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { PlusCircle, MoreHorizontal, Trash2, Edit, Bell, Users, Clock, User } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 
 const classSchema = z.object({
@@ -172,45 +164,24 @@ export default function ClassManagement() {
   };
   
   return (
-    <Card className="border-0">
-       <CardHeader>
-        <div className="flex items-center justify-between">
-            <CardTitle>Lista de Clases</CardTitle>
+    <div className="space-y-6">
+       <div className="flex items-center justify-between">
+            <h2 className="font-headline text-2xl font-bold">Lista de Clases</h2>
             <Button onClick={() => handleOpenForm()}>
                 <PlusCircle className="mr-2 h-4 w-4" /> Crear Clase
             </Button>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="px-2">Clase</TableHead>
-                <TableHead className="px-2">Horario</TableHead>
-                <TableHead className="px-2">Cupos</TableHead>
-                <TableHead className="text-right px-2">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {classes.map((cls) => (
-                <TableRow key={cls.id}>
-                  <TableCell className="px-2">
-                    <div className="font-medium">{cls.name}</div>
-                    <div className="text-xs text-muted-foreground capitalize">
-                      {cls.category} - {cls.level}
+      
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {classes.map((cls) => (
+            <Card key={cls.id} className="flex flex-col">
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                    <div className="flex-grow">
+                        <Badge variant="secondary" className="w-fit mb-2">{cls.category}</Badge>
+                        <CardTitle>{cls.name}</CardTitle>
+                        <CardDescription className="capitalize">{cls.level}</CardDescription>
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      Prof: {cls.teacherName}
-                    </div>
-                  </TableCell>
-                  <TableCell className="px-2 text-sm whitespace-nowrap">{cls.schedule}</TableCell>
-                  <TableCell className="px-2">
-                    <Badge variant={cls.bookedStudents === cls.maxStudents ? "destructive" : "secondary"}>
-                      {cls.bookedStudents} / {cls.maxStudents}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right px-2">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
@@ -244,13 +215,28 @@ export default function ClassManagement() {
                           </AlertDialog>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                </div>
+              </CardHeader>
+              <CardContent className="flex-grow space-y-3 text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                    <User className="h-4 w-4" />
+                    <span>Prof: {cls.teacherName}</span>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                    <Clock className="h-4 w-4" />
+                    <span>{cls.schedule}</span>
+                </div>
+              </CardContent>
+              <CardFooter className="bg-muted/50 p-4 flex justify-center items-center rounded-b-lg">
+                <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-primary" />
+                    <span className="font-bold">{cls.bookedStudents} / {cls.maxStudents}</span>
+                    <span className="text-muted-foreground">Cupos</span>
+                </div>
+              </CardFooter>
+            </Card>
+          ))}
         </div>
-      </CardContent>
       
       <Dialog open={isFormOpen} onOpenChange={setFormOpen}>
         <DialogContent className="sm:max-w-[425px]">
@@ -328,6 +314,8 @@ export default function ClassManagement() {
           </form>
         </DialogContent>
       </Dialog>
-    </Card>
+    </div>
   );
 }
+
+    
