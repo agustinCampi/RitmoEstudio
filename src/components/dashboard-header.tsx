@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
-import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
 import Link from 'next/link';
 import { Home, Users, Calendar, BookUser, Swords, LogOut, PanelLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -64,6 +64,9 @@ export function DashboardHeader({ title }: { title: string }) {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="sm:max-w-xs">
+             <SheetHeader className="sr-only">
+              <SheetTitle>Navegación</SheetTitle>
+            </SheetHeader>
             <nav className="grid gap-6 text-lg font-medium">
                 <Link href="#" className="flex items-center gap-2 font-semibold">
                     <Logo />
