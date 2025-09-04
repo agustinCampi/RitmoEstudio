@@ -12,32 +12,48 @@ interface WeeklyScheduleProps {
 }
 
 const daysOfWeek = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+
+// Improved mapping to handle variations like "Miércoles" and "Sábados"
 const dayMapping: { [key: string]: string } = {
-  'Lunes': 'lunes',
-  'Martes': 'martes',
-  'Miércoles': 'miércoles',
-  'Jueves': 'jueves',
-  'Viernes': 'viernes',
-  'Sábados': 'sábado',
-  'Domingos': 'domingo',
+  'lunes': 'lunes',
+  'martes': 'martes',
+  'miércoles': 'miércoles',
+  'miercoles': 'miércoles',
+  'jueves': 'jueves',
+  'viernes': 'viernes',
+  'sábado': 'sábado',
+  'sabado': 'sábado',
+  'domingo': 'domingo',
 };
 
 const parseSchedule = (schedule: string) => {
-  const dayPart = schedule.split(',')[0].toLowerCase();
+  const scheduleNormalized = schedule.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const dayPart = scheduleNormalized.split(',')[0];
   const timePart = schedule.split(',')[1]?.trim() || '';
 
   const days: string[] = [];
-  for (const day in dayMapping) {
-    if (dayPart.includes(day.toLowerCase().slice(0, 4))) {
-      days.push(dayMapping[day]);
+  
+  // Check for full day names
+  for (const keyword in dayMapping) {
+    if (dayPart.includes(keyword)) {
+      const day = dayMapping[keyword];
+      if (!days.includes(day)) {
+        days.push(day);
+      }
     }
   }
-  
-  if (days.length === 0) {
-     const matchedDay = daysOfWeek.find(d => dayPart.includes(d.slice(0,4)))
-     if(matchedDay) days.push(matchedDay)
-  }
 
+  // If no full day name matched, check for abbreviations (at least 3 letters)
+  if (days.length === 0) {
+     daysOfWeek.forEach(day => {
+       if(dayPart.includes(day.slice(0, 3))) {
+         if (!days.includes(day)) {
+            days.push(day);
+         }
+       }
+     })
+  }
+  
   return { days, time: timePart };
 };
 
@@ -72,7 +88,7 @@ export function WeeklySchedule({ classes }: WeeklyScheduleProps) {
         <CardTitle className="font-headline text-2xl">Horario de la Semana</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-7 gap-2">
           {daysOfWeek.map(day => (
             <div key={day} className="flex flex-col gap-3">
               <h3 className="text-center font-bold capitalize text-md text-muted-foreground">{day.slice(0,3)}</h3>
@@ -111,7 +127,7 @@ export function WeeklySchedule({ classes }: WeeklyScheduleProps) {
                             </div>
                             <div className="flex items-center gap-2">
                                 <BookOpen className="w-4 h-4 text-primary"/>
-                                <span>Horario: <span className="font-medium">{cls.schedule}</span></span>
+                                <span>Horario: <span className="font-medium">{cls.schedule || "N/A"}</span></span>
                             </div>
                           </div>
                         </div>
