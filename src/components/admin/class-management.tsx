@@ -182,69 +182,71 @@ export default function ClassManagement() {
         </div>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Clase</TableHead>
-              <TableHead>Profesor</TableHead>
-              <TableHead>Horario</TableHead>
-              <TableHead>Cupos</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {classes.map((cls) => (
-              <TableRow key={cls.id}>
-                <TableCell>
-                  <div className="font-medium">{cls.name}</div>
-                  <div className="text-sm text-muted-foreground capitalize">{cls.level} - {cls.category}</div>
-                </TableCell>
-                <TableCell>{cls.teacherName}</TableCell>
-                <TableCell>{cls.schedule}</TableCell>
-                <TableCell>
-                  <Badge variant={cls.bookedStudents === cls.maxStudents ? "destructive" : "secondary"}>
-                    {cls.bookedStudents} / {cls.maxStudents}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Abrir menú</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                       <DropdownMenuItem onClick={() => handleOpenForm(cls)}>
-                          <Edit className="mr-2 h-4 w-4" /> Editar
-                       </DropdownMenuItem>
-                       <NotifyStudentsDialog classId={cls.id} />
-                       <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:text-red-500">
-                              <Trash2 className="mr-2 h-4 w-4" /> Eliminar
-                            </DropdownMenuItem>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Esta acción no se puede deshacer. Se eliminará la clase permanentemente.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(cls.id)} className="bg-destructive hover:bg-destructive/90">Eliminar</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Clase</TableHead>
+                <TableHead className="hidden md:table-cell">Profesor</TableHead>
+                <TableHead className="hidden md:table-cell">Horario</TableHead>
+                <TableHead>Cupos</TableHead>
+                <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {classes.map((cls) => (
+                <TableRow key={cls.id}>
+                  <TableCell>
+                    <div className="font-medium">{cls.name}</div>
+                    <div className="text-sm text-muted-foreground capitalize">{cls.level} - {cls.category}</div>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">{cls.teacherName}</TableCell>
+                  <TableCell className="hidden md:table-cell">{cls.schedule}</TableCell>
+                  <TableCell>
+                    <Badge variant={cls.bookedStudents === cls.maxStudents ? "destructive" : "secondary"}>
+                      {cls.bookedStudents} / {cls.maxStudents}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Abrir menú</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                         <DropdownMenuItem onClick={() => handleOpenForm(cls)}>
+                            <Edit className="mr-2 h-4 w-4" /> Editar
+                         </DropdownMenuItem>
+                         <NotifyStudentsDialog classId={cls.id} />
+                         <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:text-red-500">
+                                <Trash2 className="mr-2 h-4 w-4" /> Eliminar
+                              </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Esta acción no se puede deshacer. Se eliminará la clase permanentemente.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(cls.id)} className="bg-destructive hover:bg-destructive/90">Eliminar</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
       
       <Dialog open={isFormOpen} onOpenChange={setFormOpen}>
