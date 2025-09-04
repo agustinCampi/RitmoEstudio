@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { DashboardHeader } from "@/components/dashboard-header";
 import { MOCK_CLASSES, MOCK_STUDENTS_PROFILES } from "@/lib/mock-data";
 import { Calendar, Users, BookUser } from "lucide-react";
-import { WeeklySchedule } from "@/components/dashboard/weekly-schedule";
+import { ClassCalendar } from "@/components/dashboard/class-calendar";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -45,7 +45,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-      <WeeklySchedule classes={MOCK_CLASSES} />
+      <ClassCalendar classes={MOCK_CLASSES} />
     </div>
   );
   
@@ -76,7 +76,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </div>
-        <WeeklySchedule classes={assignedClasses} />
+        <ClassCalendar classes={assignedClasses} />
       </div>
     );
   }
@@ -101,7 +101,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
            <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader>
               <CardTitle className="text-sm font-medium">Tu Próxima Aventura</CardTitle>
                <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -111,7 +111,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </div>
-        <WeeklySchedule classes={myClasses} />
+        <ClassCalendar classes={myClasses} />
       </div>
     );
   };
