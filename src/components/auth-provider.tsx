@@ -33,15 +33,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         if (error || !profile) {
             console.error("Error fetching user profile or profile not found:", error?.message || "No profile found for this user.");
-            // Fallback user object if profile doesn't exist yet
-            // This is a failsafe, but the profile should exist.
-            setUser({
-                id: session.user.id,
-                name: session.user.email || 'Usuario',
-                email: session.user.email!,
-                // A better fallback might be to check the email, or default to student
-                role: session.user.email?.includes('admin') ? 'admin' : 'student',
-            });
+            // Si el perfil no se encuentra, cerramos la sesión para evitar un estado inconsistente.
+            await supabase.auth.signOut();
+            setUser(null);
         } else {
           setUser(profile as User);
         }
