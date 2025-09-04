@@ -4,51 +4,66 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import type { User } from '@/lib/types';
-import { supabase } from '@/lib/supabase/client';
-import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react';
-import { SessionContextProvider } from '@supabase/auth-helpers-react';
+import { createClient } from '@/lib/supabase/client';
+import { Session } from '@supabase/supabase-js';
 
 export interface AuthContextType {
   user: User | null;
-  logout: () => void;
+  logout: () => Promise<void>;
   loading: boolean;
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
-function AuthProviderContent({ children }: { children: ReactNode }) {
-  const session = useSession();
-  const supabaseClient = useSupabaseClient();
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const supabase = createClient();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (session?.user) {
-        const { data: profile, error } = await supabaseClient
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (error || !profile) {
-            console.error("Error fetching user profile or profile not found:", error?.message || "No profile found for this user.");
-            // Si el perfil no se encuentra, cerramos la sesión para evitar un estado inconsistente.
-            await supabaseClient.auth.signOut();
-            setUser(null);
-        } else {
-          setUser(profile as User);
-        }
+    const fetchSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        await fetchUserProfile(session);
       } else {
+        setLoading(false);
+      }
+    };
+
+    const fetchUserProfile = async (session: Session) => {
+      const { data: profile, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (error || !profile) {
+        console.error("Error fetching user profile or profile not found:", error?.message);
+        await supabase.auth.signOut();
         setUser(null);
+      } else {
+        setUser(profile as User);
       }
       setLoading(false);
     };
 
-    fetchUserProfile();
-  }, [session, supabaseClient]);
+    fetchSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        fetchUserProfile(session);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        router.push('/');
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     if (!loading) {
@@ -63,9 +78,11 @@ function AuthProviderContent({ children }: { children: ReactNode }) {
   }, [user, loading, pathname, router]);
 
   const logout = async () => {
-    await supabaseClient.auth.signOut();
+    setLoading(true);
+    await supabase.auth.signOut();
     setUser(null);
     router.push('/');
+    setLoading(false);
   };
 
   const value = { user, logout, loading };
@@ -79,13 +96,4 @@ function AuthProviderContent({ children }: { children: ReactNode }) {
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [supabaseClient] = useState(() => supabase);
-  return (
-    <SessionContextProvider supabaseClient={supabaseClient}>
-      <AuthProviderContent>{children}</AuthProviderContent>
-    </SessionContextProvider>
-  )
 }

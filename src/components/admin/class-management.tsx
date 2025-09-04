@@ -1,14 +1,14 @@
 
 "use client";
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { Class, ClassLevel, User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase/client';
-import type { Database } from '@/lib/types/supabase';
+import { createClient } from '@/lib/supabase/client';
+import { upsertClass, deleteClass } from '@/app/actions/class-actions';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -42,7 +42,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, MoreHorizontal, Trash2, Edit, Bell, Users, Clock, User as UserIcon, Search } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Trash2, Edit, Bell, Users, Clock, User as UserIcon, Search, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 
@@ -74,6 +74,10 @@ export default function ClassManagement() {
   const [selectedLevel, setSelectedLevel] = useState<ClassLevel | 'Todos'>('Todos');
   const [categories, setCategories] = useState<string[]>(["Todas"]);
 
+  const [isPending, startTransition] = useTransition();
+
+  const supabase = createClient();
+
   const form = useForm<ClassFormValues>({
     resolver: zodResolver(classSchema),
   });
@@ -104,7 +108,7 @@ export default function ClassManagement() {
 
   useEffect(() => {
     fetchData();
-  }, [toast]);
+  }, []);
   
   const handleOpenForm = (cls: Class | null = null) => {
     setEditingClass(cls);
@@ -127,64 +131,50 @@ export default function ClassManagement() {
     setFormOpen(true);
   };
   
-  const onSubmit = async (data: ClassFormValues) => {
-    const teacher = teachers.find(t => t.id === data.teacherId);
-    if (!teacher) {
-        toast({ title: "Error", description: "Profesor no encontrado.", variant: "destructive" });
-        return;
-    }
-    
-    const classPayload = {
-      ...data,
-      teacherName: teacher.name,
-    };
+  const onSubmit = (data: ClassFormValues) => {
+    startTransition(async () => {
+        const teacher = teachers.find(t => t.id === data.teacherId);
+        if (!teacher) {
+            toast({ title: "Error", description: "Profesor no encontrado.", variant: "destructive" });
+            return;
+        }
 
-    if (editingClass) {
-      // Update class in Supabase
-      const { data: updatedData, error } = await supabase
-        .from('classes')
-        .update(classPayload)
-        .eq('id', editingClass.id)
-        .select()
-        .single();
-      
-      if (error) {
-         toast({ title: "Error al actualizar", description: error.message, variant: "destructive" });
-      } else {
-        toast({ title: "Clase actualizada", description: `La clase "${data.name}" ha sido modificada.` });
-        fetchData(); // Refetch all data
-      }
-    } else {
-      // Create class in Supabase
-      const newClassPayload = {
-        ...classPayload,
-        image: `https://picsum.photos/600/400?random=${Date.now()}`,
-        bookedStudents: 0,
-      };
-      const { data: newClass, error } = await supabase
-        .from('classes')
-        .insert(newClassPayload)
-        .select()
-        .single();
+        const formData = new FormData();
+        if (editingClass) {
+            formData.append('id', editingClass.id);
+        }
+        formData.append('name', data.name);
+        formData.append('description', data.description);
+        formData.append('teacherId', data.teacherId);
+        formData.append('teacherName', teacher.name);
+        formData.append('schedule', data.schedule);
+        formData.append('duration', String(data.duration));
+        formData.append('maxStudents', String(data.maxStudents));
+        formData.append('category', data.category);
+        formData.append('level', data.level);
 
-      if (error) {
-        toast({ title: "Error al crear", description: error.message, variant: "destructive" });
-      } else {
-        toast({ title: "Clase creada", description: `La clase "${data.name}" ha sido añadida.` });
-        fetchData(); // Refetch all data
-      }
-    }
-    setFormOpen(false);
+        const result = await upsertClass(formData);
+
+        if (result?.error) {
+            toast({ title: `Error al ${editingClass ? 'actualizar' : 'crear'}`, description: result.error.message, variant: "destructive" });
+        } else {
+            toast({ title: `Clase ${editingClass ? 'actualizada' : 'creada'}`, description: `La clase "${data.name}" ha sido guardada.` });
+            await fetchData(); // Refetch all data
+            setFormOpen(false);
+        }
+    });
   };
 
   const handleDelete = async (classId: string) => {
-    const { error } = await supabase.from('classes').delete().eq('id', classId);
-    if (error) {
-       toast({ title: "Error al eliminar", description: error.message, variant: "destructive" });
-    } else {
-      setClasses(classes.filter(c => c.id !== classId));
-      toast({ title: "Clase eliminada", variant: "destructive" });
-    }
+    startTransition(async () => {
+        const result = await deleteClass(classId);
+        if (result.error) {
+            toast({ title: "Error al eliminar", description: result.error.message, variant: "destructive" });
+        } else {
+            toast({ title: "Clase eliminada", variant: "destructive" });
+            await fetchData(); // Refetch
+        }
+    });
   };
   
   const filteredClasses = useMemo(() => {
@@ -205,7 +195,6 @@ export default function ClassManagement() {
     const [message, setMessage] = useState('');
     
     const handleSendNotification = () => {
-      // This would be a call to a Supabase Edge Function in a real scenario
       console.log("Webhook a Make.com o Supabase Edge Function (Enviar Notificación):", { id_clase: classId, mensaje_personalizado: message });
       toast({
         title: "Notificación enviada",
@@ -331,7 +320,10 @@ export default function ClassManagement() {
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
                                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDelete(cls.id)} className="bg-destructive hover:bg-destructive/90">Eliminar</AlertDialogAction>
+                                    <AlertDialogAction onClick={() => handleDelete(cls.id)} className="bg-destructive hover:bg-destructive/90" disabled={isPending}>
+                                       {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                       Eliminar
+                                    </AlertDialogAction>
                                   </AlertDialogFooter>
                                 </AlertDialogContent>
                               </AlertDialog>
@@ -438,9 +430,12 @@ export default function ClassManagement() {
               </div>
               <DialogFooter>
                 <DialogClose asChild>
-                    <Button variant="outline">Cancelar</Button>
+                    <Button variant="outline" type="button">Cancelar</Button>
                 </DialogClose>
-                <Button type="submit">Guardar Cambios</Button>
+                <Button type="submit" disabled={isPending}>
+                  {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Guardar Cambios
+                </Button>
               </DialogFooter>
           </form>
         </DialogContent>
@@ -448,4 +443,3 @@ export default function ClassManagement() {
     </div>
   );
 }
-    
