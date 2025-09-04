@@ -12,7 +12,7 @@ export type Database = {
     Tables: {
       classes: {
         Row: {
-          bookedStudents: number | null
+          bookedStudents: number
           category: string
           created_at: string
           description: string
@@ -27,7 +27,7 @@ export type Database = {
           teacherName: string
         }
         Insert: {
-          bookedStudents?: number | null
+          bookedStudents?: number
           category: string
           created_at?: string
           description: string
@@ -35,14 +35,14 @@ export type Database = {
           id?: string
           image: string
           level: Database["public"]["Enums"]["class_level"]
-          maxStudents: number
+          maxStudents?: number
           name: string
           schedule: string
           teacherId: string
           teacherName: string
         }
         Update: {
-          bookedStudents?: number | null
+          bookedStudents?: number
           category?: string
           created_at?: string
           description?: string
@@ -188,9 +188,4 @@ export type Enums<
     | { schema: keyof Database },
   EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
     ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
-    : never = never
-> = PublicEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : PublicEnumNameOrOptions extends keyof Database["public"]["Enums"]
-  ? Database["public"]["Enums"][PublicEnumNameOrOptions]
-  : never
+    ->

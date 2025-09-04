@@ -343,7 +343,7 @@ export default function ClassManagement() {
                   <CardFooter className="bg-muted/50 p-4 flex justify-center items-center rounded-b-lg">
                     <div className="flex items-center gap-2">
                         <Users className="h-4 w-4 text-primary" />
-                        <span className="font-bold">{cls.bookedStudents} / {cls.maxStudents}</span>
+                        <span className="font-bold">{cls.bookedStudents || 0} / {cls.maxStudents}</span>
                         <span className="text-muted-foreground">Cupos</span>
                     </div>
                   </CardFooter>
