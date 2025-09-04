@@ -28,30 +28,34 @@ const dayMapping: { [key: string]: string } = {
 
 const parseSchedule = (schedule: string) => {
   const scheduleNormalized = schedule.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  const dayPart = scheduleNormalized.split(',')[0];
+  const parts = scheduleNormalized.split(',');
+  const dayPart = parts[0];
   const timePart = schedule.split(',')[1]?.trim() || '';
 
   const days: string[] = [];
   
-  // Check for full day names
-  for (const keyword in dayMapping) {
-    if (dayPart.includes(keyword)) {
-      const day = dayMapping[keyword];
-      if (!days.includes(day)) {
-        days.push(day);
-      }
-    }
-  }
+  const dayKeywords = Object.keys(dayMapping);
 
-  // If no full day name matched, check for abbreviations (at least 3 letters)
+  // Check for multiple days in the same string e.g. "Lunes y Miércoles"
+  const dayWords = dayPart.split(/[\s,y/]+/);
+
+  dayWords.forEach(word => {
+    const matchedDay = dayKeywords.find(keyword => keyword.startsWith(word.trim()));
+    if (matchedDay && !days.includes(dayMapping[matchedDay])) {
+      days.push(dayMapping[matchedDay]);
+    }
+  });
+
+  // If no days were found with the split, check the whole string
   if (days.length === 0) {
-     daysOfWeek.forEach(day => {
-       if(dayPart.includes(day.slice(0, 3))) {
-         if (!days.includes(day)) {
-            days.push(day);
-         }
-       }
-     })
+    dayKeywords.forEach(keyword => {
+      if (dayPart.includes(keyword)) {
+        const day = dayMapping[keyword];
+        if (!days.includes(day)) {
+          days.push(day);
+        }
+      }
+    });
   }
   
   return { days, time: timePart };
@@ -66,7 +70,7 @@ export function WeeklySchedule({ classes }: WeeklyScheduleProps) {
       const { days, time } = parseSchedule(cls.schedule);
       days.forEach(day => {
         if (schedule[day]) {
-          schedule[day].push({ ...cls, schedule: time });
+          schedule[day].push({ ...cls, schedule: time || cls.schedule.split(',')[1]?.trim() || '' });
         }
       });
     });
