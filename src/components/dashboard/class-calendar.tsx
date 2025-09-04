@@ -7,9 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Calendar } from '@/components/ui/calendar';
 import { es } from 'date-fns/locale';
 import { format, getDay, addDays, startOfWeek } from 'date-fns';
-import { Clock, User, AlignLeft, BarChart, Calendar as CalendarIcon, Users } from 'lucide-react';
+import { Clock, User, BarChart, Calendar as CalendarIcon, Users, Star } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 const dayMapping: { [key: string]: number } = {
   'domingo': 0, 'lunes': 1, 'martes': 2, 'miércoles': 3, 'jueves': 4, 'viernes': 5, 'sábado': 6,
@@ -21,7 +22,7 @@ const parseScheduleToDayIndex = (schedule: string): number[] => {
   const dayPart = scheduleNormalized.split(',')[0];
   const dayWords = dayPart.split(/[\s,y/]+/);
   
-  const indices: number[] = new Set<number>();
+  const indices: Set<number> = new Set<number>();
   dayWords.forEach(word => {
     const trimmedWord = word.trim();
     if (!trimmedWord) return;
@@ -34,9 +35,16 @@ const parseScheduleToDayIndex = (schedule: string): number[] => {
   return Array.from(indices);
 };
 
-export function ClassCalendar({ classes }: { classes: Class[] }) {
+interface ClassCalendarProps {
+    classes: Class[];
+    highlightedClasses?: Class[];
+}
+
+export function ClassCalendar({ classes, highlightedClasses = [] }: ClassCalendarProps) {
   const [date, setDate] = useState<Date | undefined>(new Date());
   
+  const highlightedClassIds = useMemo(() => new Set(highlightedClasses.map(c => c.id)), [highlightedClasses]);
+
   const classesByDate = useMemo(() => {
     const today = new Date();
     const startOfCurrentWeek = startOfWeek(today, { locale: es });
@@ -47,17 +55,19 @@ export function ClassCalendar({ classes }: { classes: Class[] }) {
         const time = cls.schedule.split(',')[1]?.trim() || '';
 
         dayIndices.forEach(dayIndex => {
-            let classDay = addDays(startOfCurrentWeek, dayIndex - getDay(startOfCurrentWeek, { locale: es }));
-            if (getDay(classDay, { locale: es }) !== dayIndex) {
-                 const diff = dayIndex - getDay(classDay, { locale: es });
-                 classDay = addDays(classDay, diff > 3 ? diff - 7 : diff < -3 ? diff + 7 : diff)
+            let classDay = addDays(startOfCurrentWeek, dayIndex);
+             // Adjust if start of week is Sunday and we have Monday
+            if (getDay(startOfCurrentWeek, { locale: es }) === 0 && dayIndex > 0) {
+                 classDay = addDays(startOfCurrentWeek, dayIndex);
+            } else if (getDay(startOfCurrentWeek, { locale: es }) !== 0) {
+                // Adjust for weeks starting on Monday
+                classDay = addDays(startOfWeek(today, { locale: es, weekStartsOn: 1 }), dayIndex-1);
             }
             
             const dateString = format(classDay, 'yyyy-MM-dd');
             if (!classMap.has(dateString)) {
                 classMap.set(dateString, []);
             }
-            // Asegurarse de no añadir duplicados si la lógica genera el mismo día dos veces
             if(!classMap.get(dateString)?.some(c => c.id === cls.id)) {
                classMap.get(dateString)?.push({ ...cls, schedule: time });
             }
@@ -113,8 +123,16 @@ export function ClassCalendar({ classes }: { classes: Class[] }) {
                     selectedDayClasses.map(cls => (
                         <Dialog key={cls.id}>
                             <DialogTrigger asChild>
-                                <div className="p-3 bg-muted/50 rounded-lg hover:bg-muted cursor-pointer transition-colors">
-                                    <p className="font-bold text-sm">{cls.name}</p>
+                                <div className={cn(
+                                    "p-3 rounded-lg cursor-pointer transition-colors",
+                                    highlightedClassIds.has(cls.id) 
+                                        ? "bg-primary/20 hover:bg-primary/30 border border-primary/50" 
+                                        : "bg-muted/50 hover:bg-muted"
+                                )}>
+                                    <div className="flex justify-between items-center">
+                                      <p className="font-bold text-sm">{cls.name}</p>
+                                      {highlightedClassIds.has(cls.id) && <Star className="h-4 w-4 text-primary" />}
+                                    </div>
                                     <p className="text-xs text-muted-foreground">{cls.teacherName}</p>
                                     <div className="flex items-center gap-2 text-xs text-primary pt-1">
                                         <Clock className="h-3 w-3" />
