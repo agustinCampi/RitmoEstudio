@@ -186,28 +186,31 @@ export default function ClassManagement() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Clase</TableHead>
-                <TableHead className="hidden md:table-cell">Profesor</TableHead>
-                <TableHead className="hidden md:table-cell">Horario</TableHead>
-                <TableHead>Cupos</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
+                <TableHead className="px-2">Clase</TableHead>
+                <TableHead className="px-2">Horario</TableHead>
+                <TableHead className="px-2">Cupos</TableHead>
+                <TableHead className="text-right px-2">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {classes.map((cls) => (
                 <TableRow key={cls.id}>
-                  <TableCell>
+                  <TableCell className="px-2">
                     <div className="font-medium">{cls.name}</div>
-                    <div className="text-sm text-muted-foreground capitalize">{cls.level} - {cls.category}</div>
+                    <div className="text-xs text-muted-foreground capitalize">
+                      {cls.category} - {cls.level}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Prof: {cls.teacherName}
+                    </div>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell">{cls.teacherName}</TableCell>
-                  <TableCell className="hidden md:table-cell">{cls.schedule}</TableCell>
-                  <TableCell>
+                  <TableCell className="px-2 text-sm whitespace-nowrap">{cls.schedule}</TableCell>
+                  <TableCell className="px-2">
                     <Badge variant={cls.bookedStudents === cls.maxStudents ? "destructive" : "secondary"}>
                       {cls.bookedStudents} / {cls.maxStudents}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right px-2">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
