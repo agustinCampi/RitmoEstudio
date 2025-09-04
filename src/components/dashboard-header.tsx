@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -13,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
 import Link from 'next/link';
-import { Home, Users, Calendar, BookUser, Swords, LogOut, PanelLeft } from 'lucide-react';
+import { Home, Users, Calendar, BookUser, Swords, LogOut, PanelLeft, ClipboardCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
 import { Logo } from './logo';
@@ -26,7 +27,9 @@ const adminNavItems = [
 
 const teacherNavItems = [
   { href: '/dashboard', icon: Home, label: 'Inicio' },
-  { href: '/dashboard/classes', icon: Calendar, label: 'Mis Clases' },
+  { href: '/dashboard/assigned-classes', icon: ClipboardCheck, label: 'Mis Clases Asignadas' },
+  { href: '/dashboard/classes', icon: Swords, label: 'Catálogo de Clases' },
+  { href: '/dashboard/my-classes', icon: BookUser, label: 'Mis Clases Reservadas' },
 ];
 
 const studentNavItems = [
@@ -64,8 +67,8 @@ export function DashboardHeader({ title }: { title: string }) {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="sm:max-w-xs">
-             <SheetHeader className="sr-only">
-              <SheetTitle>Navegación</SheetTitle>
+             <SheetHeader>
+              <SheetTitle className="sr-only">Navegación</SheetTitle>
             </SheetHeader>
             <nav className="grid gap-6 text-lg font-medium">
                 <Link href="#" className="flex items-center gap-2 font-semibold">

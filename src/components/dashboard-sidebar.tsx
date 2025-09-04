@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -15,6 +16,7 @@ import {
   BookUser,
   LogOut,
   Swords,
+  ClipboardCheck,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { Logo } from '@/components/logo';
@@ -29,7 +31,9 @@ const adminNavItems = [
 
 const teacherNavItems = [
   { href: '/dashboard', icon: Home, label: 'Inicio' },
-  { href: '/dashboard/classes', icon: Calendar, label: 'Mis Clases' },
+  { href: '/dashboard/assigned-classes', icon: ClipboardCheck, label: 'Mis Clases Asignadas' },
+  { href: '/dashboard/classes', icon: Swords, label: 'Catálogo de Clases' },
+  { href: '/dashboard/my-classes', icon: BookUser, label: 'Mis Clases Reservadas' },
 ];
 
 const studentNavItems = [

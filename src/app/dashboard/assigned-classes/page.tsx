@@ -3,29 +3,29 @@
 
 import { useAuth } from "@/hooks/use-auth";
 import { DashboardHeader } from "@/components/dashboard-header";
-import MyClasses from "@/components/student/my-classes";
+import AssignedClasses from "@/components/teacher/assigned-classes";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-export default function MyClassesPage() {
+export default function AssignedClassesPage() {
   const { user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (user && user.role === 'admin') {
+    if (user && user.role !== 'teacher') {
       router.push('/dashboard');
     }
   }, [user, router]);
   
-  if (!user || user.role === 'admin') {
+  if (!user || user.role !== 'teacher') {
     return null;
   }
 
   return (
     <div className="w-full">
-      <DashboardHeader title="Mis Clases Reservadas" />
+      <DashboardHeader title="Mis Clases Asignadas" />
       <div className="px-4 sm:px-0">
-        <MyClasses />
+        <AssignedClasses />
       </div>
     </div>
   );
