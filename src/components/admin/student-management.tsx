@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -10,14 +11,6 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -41,8 +34,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PlusCircle, MoreHorizontal, Trash2 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { PlusCircle, MoreHorizontal, Trash2, CalendarDays, BookUser } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 
 const studentSchema = z.object({
@@ -86,99 +79,91 @@ export default function StudentManagement() {
   const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('');
 
   return (
-    <Card className="border-0">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-            <CardTitle>Lista de Alumnos</CardTitle>
-            <Dialog open={isFormOpen} onOpenChange={setFormOpen}>
-                <DialogTrigger asChild>
-                    <Button><PlusCircle className="mr-2 h-4 w-4" /> Añadir Alumno</Button>
-                </DialogTrigger>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Añadir Nuevo Alumno</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
-                        <div>
-                            <Label htmlFor="name">Nombre Completo</Label>
-                            <Input id="name" {...form.register('name')} />
-                            {form.formState.errors.name && <p className="text-sm text-destructive mt-1">{form.formState.errors.name.message}</p>}
-                        </div>
-                        <div>
-                            <Label htmlFor="email">Email</Label>
-                            <Input id="email" type="email" {...form.register('email')} />
-                            {form.formState.errors.email && <p className="text-sm text-destructive mt-1">{form.formState.errors.email.message}</p>}
-                        </div>
-                        <DialogFooter>
-                            <Button type="submit">Añadir Alumno</Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+          <h2 className="font-headline text-2xl font-bold">Lista de Alumnos</h2>
+          <Dialog open={isFormOpen} onOpenChange={setFormOpen}>
+              <DialogTrigger asChild>
+                  <Button><PlusCircle className="mr-2 h-4 w-4" /> Añadir Alumno</Button>
+              </DialogTrigger>
+              <DialogContent>
+                  <DialogHeader>
+                      <DialogTitle>Añadir Nuevo Alumno</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
+                      <div>
+                          <Label htmlFor="name">Nombre Completo</Label>
+                          <Input id="name" {...form.register('name')} />
+                          {form.formState.errors.name && <p className="text-sm text-destructive mt-1">{form.formState.errors.name.message}</p>}
+                      </div>
+                      <div>
+                          <Label htmlFor="email">Email</Label>
+                          <Input id="email" type="email" {...form.register('email')} />
+                          {form.formState.errors.email && <p className="text-sm text-destructive mt-1">{form.formState.errors.email.message}</p>}
+                      </div>
+                      <DialogFooter>
+                          <Button type="submit">Añadir Alumno</Button>
+                      </DialogFooter>
+                  </form>
+              </DialogContent>
+          </Dialog>
+      </div>
+
+       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {students.map((student) => (
+            <Card key={student.id}>
+              <CardHeader className="flex flex-row items-center gap-4">
+                 <Avatar className="h-12 w-12">
+                    <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} />
+                    <AvatarFallback>{getInitials(student.name)}</AvatarFallback>
+                </Avatar>
+                <div className="flex-grow">
+                    <CardTitle className="text-lg">{student.name}</CardTitle>
+                    <CardDescription className="truncate">{student.email}</CardDescription>
+                </div>
+                 <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0 flex-shrink-0">
+                        <span className="sr-only">Abrir menú</span>
+                        <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:text-red-500">
+                                    <Trash2 className="mr-2 h-4 w-4" /> Eliminar
+                                </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Esta acción no se puede deshacer. Se eliminará el perfil del alumno permanentemente.
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(student.id)} className="bg-destructive hover:bg-destructive/90">Eliminar</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                 <div className="flex items-center gap-2 text-muted-foreground">
+                    <CalendarDays className="h-4 w-4" />
+                    <span>Miembro desde el {format(student.joinedDate, "d/MM/yy", { locale: es })}</span>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                    <BookUser className="h-4 w-4" />
+                    <span>{student.bookedClasses} clases reservadas</span>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="px-2">Nombre</TableHead>
-                <TableHead className="px-2">Email</TableHead>
-                <TableHead className="hidden md:table-cell px-2">Miembro desde</TableHead>
-                <TableHead className="px-2">Clases</TableHead>
-                <TableHead className="text-right px-2">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {students.map((student) => (
-                <TableRow key={student.id}>
-                  <TableCell className="font-medium flex items-center gap-3 px-2">
-                      <Avatar>
-                          <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} />
-                          <AvatarFallback>{getInitials(student.name)}</AvatarFallback>
-                      </Avatar>
-                      <span className="whitespace-nowrap">{student.name}</span>
-                  </TableCell>
-                  <TableCell className="px-2 break-all">{student.email}</TableCell>
-                  <TableCell className="hidden md:table-cell px-2 whitespace-nowrap">{format(student.joinedDate, "d 'de' MMMM, yyyy", { locale: es })}</TableCell>
-                  <TableCell className="px-2">{student.bookedClasses}</TableCell>
-                  <TableCell className="text-right px-2">
-                  <AlertDialog>
-                      <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Abrir menú</span>
-                              <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                              <AlertDialogTrigger asChild>
-                                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:text-red-500">
-                                      <Trash2 className="mr-2 h-4 w-4" /> Eliminar
-                                  </DropdownMenuItem>
-                              </AlertDialogTrigger>
-                          </DropdownMenuContent>
-                      </DropdownMenu>
-                      <AlertDialogContent>
-                          <AlertDialogHeader>
-                          <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                              Esta acción no se puede deshacer. Se eliminará el perfil del alumno permanentemente.
-                          </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDelete(student.id)} className="bg-red-600 hover:bg-red-700">Eliminar</AlertDialogAction>
-                          </AlertDialogFooter>
-                      </AlertDialogContent>
-                      </AlertDialog>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+    </div>
   );
 }
