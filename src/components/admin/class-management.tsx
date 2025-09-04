@@ -146,7 +146,7 @@ export default function ClassManagement() {
       }
     } else {
       // Create class in Supabase
-      const newClassPayload: Omit<Database['public']['Tables']['classes']['Insert'], 'id' | 'created_at'> = {
+      const newClassPayload = {
         ...data,
         teacherName,
         image: `https://picsum.photos/600/400?random=${Date.now()}`,
