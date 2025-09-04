@@ -1,13 +1,14 @@
 
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { MOCK_CLASSES, MOCK_USERS } from '@/lib/mock-data';
+import { MOCK_USERS } from '@/lib/mock-data';
 import type { Class, ClassLevel } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { createClient } from '@/lib/supabase/client';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -59,22 +60,41 @@ const classSchema = z.object({
 type ClassFormValues = z.infer<typeof classSchema>;
 
 const teachers = MOCK_USERS.filter(u => u.role === 'teacher');
-const categories = ["Todas", ...new Set(MOCK_CLASSES.map(c => c.category))];
 const levels: (ClassLevel | 'Todos')[] = ["Todos", "principiante", "intermedio", "avanzado"];
 
 
 export default function ClassManagement() {
+  const supabase = createClient();
   const { toast } = useToast();
-  const [classes, setClasses] = useState<Class[]>(MOCK_CLASSES);
+  const [classes, setClasses] = useState<Class[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isFormOpen, setFormOpen] = useState(false);
   const [editingClass, setEditingClass] = useState<Class | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todas');
   const [selectedLevel, setSelectedLevel] = useState<ClassLevel | 'Todos'>('Todos');
+  const [categories, setCategories] = useState<string[]>(["Todas"]);
 
   const form = useForm<ClassFormValues>({
     resolver: zodResolver(classSchema),
   });
+
+  useEffect(() => {
+    const fetchClasses = async () => {
+      setLoading(true);
+      const { data, error } = await supabase.from('classes').select('*');
+      if (error) {
+        toast({ title: "Error", description: "No se pudieron cargar las clases.", variant: "destructive" });
+        console.error(error);
+      } else {
+        setClasses(data as Class[]);
+        const uniqueCategories = ["Todas", ...new Set(data.map((c: Class) => c.category))];
+        setCategories(uniqueCategories);
+      }
+      setLoading(false);
+    };
+    fetchClasses();
+  }, [supabase, toast]);
   
   const handleOpenForm = (cls: Class | null = null) => {
     setEditingClass(cls);
@@ -97,33 +117,56 @@ export default function ClassManagement() {
     setFormOpen(true);
   };
   
-  const onSubmit = (data: ClassFormValues) => {
+  const onSubmit = async (data: ClassFormValues) => {
     const teacherName = teachers.find(t => t.id === data.teacherId)?.name || 'N/A';
+    
     if (editingClass) {
-      // Update class
-      console.log('Webhook a Make.com (Editar Clase):', { id: editingClass.id, ...data });
-      setClasses(classes.map(c => c.id === editingClass.id ? { ...c, ...data, teacherName } : c));
-      toast({ title: "Clase actualizada", description: `La clase "${data.name}" ha sido modificada.` });
+      // Update class in Supabase
+      const { data: updatedData, error } = await supabase
+        .from('classes')
+        .update({ ...data, teacherName })
+        .eq('id', editingClass.id)
+        .select()
+        .single();
+      
+      if (error) {
+         toast({ title: "Error al actualizar", description: error.message, variant: "destructive" });
+      } else {
+        setClasses(classes.map(c => c.id === editingClass.id ? updatedData as Class : c));
+        toast({ title: "Clase actualizada", description: `La clase "${data.name}" ha sido modificada.` });
+      }
     } else {
-      // Create class
-      const newClass: Class = {
-        id: `cls_${Date.now()}`,
+      // Create class in Supabase
+      const newClassPayload = {
         ...data,
         teacherName,
         image: `https://picsum.photos/600/400?random=${Date.now()}`,
         bookedStudents: 0,
       };
-      console.log('Webhook a Make.com (Crear Clase):', newClass);
-      setClasses([newClass, ...classes]);
-      toast({ title: "Clase creada", description: `La clase "${data.name}" ha sido añadida.` });
+      const { data: newClass, error } = await supabase
+        .from('classes')
+        .insert(newClassPayload)
+        .select()
+        .single();
+
+      if (error) {
+        toast({ title: "Error al crear", description: error.message, variant: "destructive" });
+      } else {
+        setClasses([newClass as Class, ...classes]);
+        toast({ title: "Clase creada", description: `La clase "${data.name}" ha sido añadida.` });
+      }
     }
     setFormOpen(false);
   };
 
-  const handleDelete = (classId: string) => {
-    console.log('Webhook a Make.com (Eliminar Clase):', { id: classId });
-    setClasses(classes.filter(c => c.id !== classId));
-    toast({ title: "Clase eliminada", variant: "destructive" });
+  const handleDelete = async (classId: string) => {
+    const { error } = await supabase.from('classes').delete().eq('id', classId);
+    if (error) {
+       toast({ title: "Error al eliminar", description: error.message, variant: "destructive" });
+    } else {
+      setClasses(classes.filter(c => c.id !== classId));
+      toast({ title: "Clase eliminada", variant: "destructive" });
+    }
   };
   
   const filteredClasses = useMemo(() => {
@@ -144,7 +187,8 @@ export default function ClassManagement() {
     const [message, setMessage] = useState('');
     
     const handleSendNotification = () => {
-      console.log("Webhook a Make.com (Enviar Notificación):", { id_clase: classId, mensaje_personalizado: message });
+      // This would be a call to a Supabase Edge Function in a real scenario
+      console.log("Webhook a Make.com o Supabase Edge Function (Enviar Notificación):", { id_clase: classId, mensaje_personalizado: message });
       toast({
         title: "Notificación enviada",
         description: "Los alumnos inscritos recibirán un email con el mensaje.",
@@ -183,6 +227,10 @@ export default function ClassManagement() {
       </Dialog>
     );
   };
+  
+  if (loading) {
+    return <div className="text-center py-12">Cargando clases...</div>;
+  }
   
   return (
     <div className="space-y-6">
@@ -296,7 +344,7 @@ export default function ClassManagement() {
         ) : (
              <div className="text-center py-12 border-2 border-dashed rounded-lg">
                 <h3 className="font-headline text-2xl font-bold">No se encontraron clases</h3>
-                <p className="text-muted-foreground mt-2">Prueba a cambiar los filtros o el término de búsqueda.</p>
+                <p className="text-muted-foreground mt-2">Prueba a cambiar los filtros o el término de búsqueda, o crea una nueva clase.</p>
             </div>
         )}
       
