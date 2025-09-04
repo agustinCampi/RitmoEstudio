@@ -6,6 +6,7 @@ import { DashboardHeader } from "@/components/dashboard-header";
 import { MOCK_CLASSES, MOCK_STUDENTS_PROFILES } from "@/lib/mock-data";
 import { Calendar, Users, BookUser } from "lucide-react";
 import { ClassCalendar } from "@/components/dashboard/class-calendar";
+import Link from "next/link";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -14,26 +15,30 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <p className="text-muted-foreground">Aquí puedes gestionar todos los aspectos del estudio de baile.</p>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Clases</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{MOCK_CLASSES.length}</div>
-            <p className="text-xs text-muted-foreground">Clases activas actualmente</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Alumnos</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{MOCK_STUDENTS_PROFILES.length}</div>
-            <p className="text-xs text-muted-foreground">Alumnos registrados en el sistema</p>
-          </CardContent>
-        </Card>
+        <Link href="/dashboard/classes">
+          <Card className="hover:bg-muted/50 transition-colors">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total de Clases</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{MOCK_CLASSES.length}</div>
+              <p className="text-xs text-muted-foreground">Clases activas actualmente</p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/dashboard/students">
+          <Card className="hover:bg-muted/50 transition-colors">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total de Alumnos</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{MOCK_STUDENTS_PROFILES.length}</div>
+              <p className="text-xs text-muted-foreground">Alumnos registrados en el sistema</p>
+            </CardContent>
+          </Card>
+        </Link>
          <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Reservas Totales</CardTitle>
@@ -55,26 +60,30 @@ export default function DashboardPage() {
      <div className="space-y-6">
         <p className="text-muted-foreground">Aquí puedes ver un resumen de tus clases y actividades.</p>
         <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Clases Asignadas</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{assignedClasses.length}</div>
-              <p className="text-xs text-muted-foreground">Clases que impartes esta semana</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Próxima Clase</CardTitle>
-               <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl font-bold">{assignedClasses[0]?.name || 'Ninguna'}</div>
-              <p className="text-xs text-muted-foreground">{assignedClasses[0]?.schedule || 'No hay clases próximas'}</p>
-            </CardContent>
-          </Card>
+          <Link href="/dashboard/classes">
+            <Card className="hover:bg-muted/50 transition-colors">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Clases Asignadas</CardTitle>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{assignedClasses.length}</div>
+                <p className="text-xs text-muted-foreground">Clases que impartes esta semana</p>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/dashboard/classes">
+            <Card className="hover:bg-muted/50 transition-colors">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Próxima Clase</CardTitle>
+                 <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-xl font-bold">{assignedClasses[0]?.name || 'Ninguna'}</div>
+                <p className="text-xs text-muted-foreground">{assignedClasses[0]?.schedule || 'No hay clases próximas'}</p>
+              </CardContent>
+            </Card>
+          </Link>
         </div>
         <ClassCalendar classes={assignedClasses} />
       </div>
@@ -90,26 +99,30 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <p className="text-muted-foreground">¡Prepárate para bailar! Aquí tienes un resumen de tu actividad.</p>
          <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Mis Clases Reservadas</CardTitle>
-              <BookUser className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{myBookings}</div>
-              <p className="text-xs text-muted-foreground">Clases para esta semana</p>
-            </CardContent>
-          </Card>
-           <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium">Tu Próxima Aventura</CardTitle>
-               <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl font-bold">{nextClass.name}</div>
-              <p className="text-xs text-muted-foreground">con {nextClass.teacherName}</p>
-            </CardContent>
-          </Card>
+          <Link href="/dashboard/my-classes">
+            <Card className="hover:bg-muted/50 transition-colors">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Mis Clases Reservadas</CardTitle>
+                <BookUser className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{myBookings}</div>
+                <p className="text-xs text-muted-foreground">Clases para esta semana</p>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/dashboard/classes">
+            <Card className="hover:bg-muted/50 transition-colors">
+                <CardHeader>
+                  <CardTitle className="text-sm font-medium">Tu Próxima Aventura</CardTitle>
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-xl font-bold">{nextClass.name}</div>
+                  <p className="text-xs text-muted-foreground">con {nextClass.teacherName}</p>
+                </CardContent>
+            </Card>
+           </Link>
         </div>
         <ClassCalendar classes={myClasses} />
       </div>
