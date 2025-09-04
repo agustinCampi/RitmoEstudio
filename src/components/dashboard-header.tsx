@@ -68,9 +68,9 @@ export function DashboardHeader({ title }: { title: string }) {
           </SheetTrigger>
           <SheetContent side="left" className="sm:max-w-xs">
              <SheetHeader>
-              <SheetTitle className="sr-only">Navegación</SheetTitle>
+              <SheetTitle>Navegación</SheetTitle>
             </SheetHeader>
-            <nav className="grid gap-6 text-lg font-medium">
+            <nav className="grid gap-6 text-lg font-medium mt-4">
                 <Link href="#" className="flex items-center gap-2 font-semibold">
                     <Logo />
                 </Link>
@@ -114,9 +114,11 @@ export function DashboardHeader({ title }: { title: string }) {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>
               <p>{user?.name}</p>
-              <p className="text-xs text-muted-foreground font-normal">
-                {user?.role.charAt(0).toUpperCase() + user!.role.slice(1)}
-              </p>
+              {user?.role && (
+                <p className="text-xs text-muted-foreground font-normal capitalize">
+                  {user.role}
+                </p>
+              )}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout}>Cerrar sesión</DropdownMenuItem>
