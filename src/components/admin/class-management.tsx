@@ -8,7 +8,8 @@ import { z } from 'zod';
 import { MOCK_USERS } from '@/lib/mock-data';
 import type { Class, ClassLevel } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { createClient } from '@/lib/supabase/client';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import type { Database } from '@/lib/types/supabase';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -64,7 +65,6 @@ const levels: (ClassLevel | 'Todos')[] = ["Todos", "principiante", "intermedio",
 
 
 export default function ClassManagement() {
-  const supabase = createClient();
   const { toast } = useToast();
   const [classes, setClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,6 +74,7 @@ export default function ClassManagement() {
   const [selectedCategory, setSelectedCategory] = useState('Todas');
   const [selectedLevel, setSelectedLevel] = useState<ClassLevel | 'Todos'>('Todos');
   const [categories, setCategories] = useState<string[]>(["Todas"]);
+  const supabase = createClientComponentClient<Database>();
 
   const form = useForm<ClassFormValues>({
     resolver: zodResolver(classSchema),
@@ -94,7 +95,7 @@ export default function ClassManagement() {
       setLoading(false);
     };
     fetchClasses();
-  }, [supabase, toast]);
+  }, [toast, supabase]);
   
   const handleOpenForm = (cls: Class | null = null) => {
     setEditingClass(cls);

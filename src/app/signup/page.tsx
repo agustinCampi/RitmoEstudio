@@ -7,7 +7,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
-import { createClient } from '@/lib/supabase/client';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import type { Database } from '@/lib/types/supabase';
 
 
 import { Button } from '@/components/ui/button';
@@ -33,8 +34,8 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const supabase = createClient();
-
+  const supabase = createClientComponentClient<Database>();
+  
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
@@ -81,9 +82,6 @@ export default function SignupPage() {
                 description: profileError.message,
                 variant: "destructive"
             });
-            // NOTE: We are not deleting the user here if profile creation fails
-            // to avoid needing admin privileges on the client-side.
-            // This case should be handled gracefully, maybe with a retry mechanism or server-side logic.
             return
         }
     }
