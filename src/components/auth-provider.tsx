@@ -24,6 +24,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const fetchUserProfile = async (session: Session | null) => {
+      setLoading(true);
       if (session?.user) {
         const { data: profile, error } = await supabase
           .from('users')
