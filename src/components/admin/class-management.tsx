@@ -163,7 +163,7 @@ export default function ClassManagement({ initialClasses, initialTeachers }: Cla
       const matchesSearch = searchTerm === '' ||
         cls.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         cls.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (cls.teacher_name && cls.teacher_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (cls.teacherName && cls.teacherName.toLowerCase().includes(searchTerm.toLowerCase())) ||
         cls.level.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesLevel && matchesSearch;
     });
@@ -234,7 +234,7 @@ export default function ClassManagement({ initialClasses, initialTeachers }: Cla
                                     <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                                     <AlertDialogDescription>
                                       Esta acción no se puede deshacer. Se eliminará la clase permanentemente.
-                                    </d>AlertDialogDescription>
+                                    </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
                                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
@@ -252,7 +252,7 @@ export default function ClassManagement({ initialClasses, initialTeachers }: Cla
                   <CardContent className="flex-grow space-y-3 text-sm">
                     <div className="flex items-center gap-2 text-muted-foreground">
                         <UserIcon className="h-4 w-4" />
-                        <span>Prof: {cls.teacher_name}</span>
+                        <span>Prof: {cls.teacherName}</span>
                     </div>
                     <div className="flex items-center gap-2 text-muted-foreground">
                         <Clock className="h-4 w-4" />
@@ -349,3 +349,5 @@ export default function ClassManagement({ initialClasses, initialTeachers }: Cla
     </div>
   );
 }
+
+    
