@@ -13,7 +13,6 @@ export type Database = {
       classes: {
         Row: {
           booked_students: number | null
-          category: string | null
           created_at: string
           description: string
           duration: number
@@ -24,11 +23,9 @@ export type Database = {
           name: string
           schedule: string
           teacher_id: string
-          teacherName: string | null
         }
         Insert: {
           booked_students?: number | null
-          category?: string | null
           created_at?: string
           description: string
           duration: number
@@ -39,11 +36,9 @@ export type Database = {
           name: string
           schedule: string
           teacher_id: string
-          teacherName?: string | null
         }
         Update: {
           booked_students?: number | null
-          category?: string | null
           created_at?: string
           description?: string
           duration?: number
@@ -54,7 +49,6 @@ export type Database = {
           name?: string
           schedule?: string
           teacher_id?: string
-          teacherName?: string | null
         }
         Relationships: [
           {

@@ -58,13 +58,13 @@ type ClassFormValues = z.infer<typeof classSchema>;
 const levels: (ClassLevel | 'Todos')[] = ["Todos", "principiante", "intermedio", "avanzado"];
 
 interface ClassManagementProps {
-  initialClasses: Class[];
+  initialClasses: (Class & { teacher_name: string })[];
   initialTeachers: User[];
 }
 
 export default function ClassManagement({ initialClasses, initialTeachers }: ClassManagementProps) {
   const { toast } = useToast();
-  const [classes, setClasses] = useState<Class[]>(initialClasses);
+  const [classes, setClasses] = useState(initialClasses);
   const [teachers, setTeachers] = useState<User[]>(initialTeachers);
   const [isFormOpen, setFormOpen] = useState(false);
   const [editingClass, setEditingClass] = useState<Class | null>(null);
@@ -72,11 +72,9 @@ export default function ClassManagement({ initialClasses, initialTeachers }: Cla
   const [selectedLevel, setSelectedLevel] = useState<ClassLevel | 'Todos'>('Todos');
   const [isPending, startTransition] = useTransition();
 
-  // This function is now used to refresh data after a mutation (create, update, delete)
   const refreshData = async () => {
-    // Always use the standardized server action to get data
     const classesData = await getClassesWithTeachers();
-    setClasses(classesData as Class[]);
+    setClasses(classesData as (Class & { teacher_name: string })[]);
   };
 
   const form = useForm<ClassFormValues>({
@@ -158,7 +156,6 @@ export default function ClassManagement({ initialClasses, initialTeachers }: Cla
   const filteredClasses = useMemo(() => {
     return classes.filter(cls => {
       const matchesLevel = selectedLevel === 'Todos' || cls.level === selectedLevel;
-      // Standardize on using `teacher_name` which comes from the server action join
       const teacherName = cls.teacher_name || '';
       const matchesSearch = searchTerm === '' ||
         cls.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -252,7 +249,6 @@ export default function ClassManagement({ initialClasses, initialTeachers }: Cla
                   <CardContent className="flex-grow space-y-3 text-sm">
                     <div className="flex items-center gap-2 text-muted-foreground">
                         <UserIcon className="h-4 w-4" />
-                        {/* Always use teacher_name, which is now reliable */}
                         <span>Prof: {cls.teacher_name}</span>
                     </div>
                     <div className="flex items-center gap-2 text-muted-foreground">

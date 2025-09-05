@@ -7,6 +7,7 @@ import { DashboardHeader } from "@/components/dashboard-header";
 import ClassManagement from "@/components/admin/class-management";
 import ClassCatalog from "@/components/student/class-catalog";
 import { getClassesWithTeachers } from '@/app/actions/class-actions';
+import { User } from '@/lib/types';
 
 export default async function ClassesPage() {
   const cookieStore = cookies();
@@ -47,7 +48,6 @@ export default async function ClassesPage() {
   const { role } = userProfile;
   const isAdmin = role === 'admin';
 
-  // Fetch all required data on the server using the standardized server action
   const classesData = await getClassesWithTeachers();
   
   const { data: teachersData, error: teachersError } = isAdmin

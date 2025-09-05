@@ -49,7 +49,6 @@ export default function ClassCatalog({ initialClasses }: ClassCatalogProps) {
   const filteredClasses = useMemo(() => {
     return classes.filter(cls => {
       const matchesLevel = selectedLevel === 'Todos' || cls.level === selectedLevel;
-      // Standardize on using `teacher_name` which comes from the server action join
       const teacherName = cls.teacher_name || '';
       const matchesSearch = searchTerm === '' || 
                             cls.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -110,7 +109,6 @@ export default function ClassCatalog({ initialClasses }: ClassCatalogProps) {
                           <Badge variant="outline" className="capitalize">{cls.level}</Badge>
                         </div>
                         <CardTitle className="font-bold font-headline pt-2">{cls.name}</CardTitle>
-                        {/* Always use teacher_name */}
                         <CardDescription>con {cls.teacher_name || 'Profesor no asignado'}</CardDescription>
                         <p className="text-sm pt-2">{cls.description}</p>
                     </CardContent>

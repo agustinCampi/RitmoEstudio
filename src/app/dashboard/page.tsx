@@ -34,8 +34,10 @@ export default function DashboardPage() {
   }
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if(user) {
+      fetchData();
+    }
+  }, [user]);
 
   const AdminDashboard = () => (
     <div className="space-y-6">
@@ -120,9 +122,8 @@ export default function DashboardPage() {
   }
 
   const StudentDashboard = () => {
-     // This would come from a 'bookings' table
      const myBookingsCount = 0; 
-     const myClasses = classes.filter(c => c.booked_students && c.booked_students > 0); // Placeholder
+     const myClasses = classes.slice(0,2); // Placeholder
      const nextClass = myClasses[0];
 
     return (

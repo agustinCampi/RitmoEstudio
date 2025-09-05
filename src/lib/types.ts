@@ -15,13 +15,12 @@ export interface Class {
   id: string;
   name: string;
   description: string;
-  teacher_id: string; // The foreign key
+  teacher_id: string; 
   schedule: string;
-  duration: number; // in minutes
+  duration: number; 
   max_students: number;
   image: string;
   level: ClassLevel;
-  // This field is now consistently populated by the getClassesWithTeachers action
   teacher_name?: string; 
   booked_students?: number;
   'data-ai-hint'?: string;

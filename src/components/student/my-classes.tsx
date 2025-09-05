@@ -80,7 +80,6 @@ export default function MyClasses() {
             <div className="flex justify-between items-start">
                 <div>
                     <CardTitle className="font-headline font-bold">{cls.name}</CardTitle>
-                    {/* Always use teacher_name */}
                     <CardDescription>con {cls.teacher_name}</CardDescription>
                 </div>
                 <AlertDialog>

@@ -18,17 +18,12 @@ const classSchema = z.object({
 
 export async function upsertClass(formData: FormData) {
   const supabase = createAdminClient()
-
-  const teacherId = formData.get('teacher_id') as string;
-
-  // We no longer need to fetch the teacher's name here to store it denormalized.
-  // The join in getClassesWithTeachers will handle providing the name.
   
   const values = {
     id: formData.get('id') as string || undefined,
     name: formData.get('name') as string,
     description: formData.get('description') as string,
-    teacher_id: teacherId,
+    teacher_id: formData.get('teacher_id') as string,
     schedule: formData.get('schedule') as string,
     duration: formData.get('duration') as string,
     max_students: formData.get('max_students') as string,
@@ -47,14 +42,11 @@ export async function upsertClass(formData: FormData) {
 
   let result;
   
-  // No longer need to manually add teacherName to the payload.
   const payload = { ...classData };
 
   if (id) {
-    // Update operation
     result = await supabase.from('classes').update(payload).eq('id', id).select().single();
   } else {
-    // Insert operation
      const insertPayload = {
       ...payload,
       image: `https://picsum.photos/600/400?random=${Date.now()}`,
@@ -74,6 +66,7 @@ export async function upsertClass(formData: FormData) {
   }
 
   revalidatePath('/dashboard/classes')
+  revalidatePath('/dashboard')
   return { data: result.data }
 }
 
@@ -91,14 +84,13 @@ export async function deleteClass(classId: string) {
     }
     
     revalidatePath('/dashboard/classes');
+    revalidatePath('/dashboard')
     return { success: true };
 }
 
-// This is the corrected and standardized function to get all classes with their teacher's name.
 export async function getClassesWithTeachers() {
     const supabase = createAdminClient();
     
-    // Correct way to perform a join in Supabase
     const { data, error } = await supabase
         .from('classes')
         .select(`
@@ -111,10 +103,8 @@ export async function getClassesWithTeachers() {
         return [];
     }
     
-    // Remap the data to create a flat structure with teacher_name for easy use in components.
     return data?.map(cls => ({
         ...cls,
-        // The joined data is in a nested object, so we extract it.
         teacher_name: (cls.teacher as any)?.name || 'Desconocido'
     })) || [];
 }
