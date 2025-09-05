@@ -3,13 +3,12 @@
 import Link from "next/link";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { navItems } from "@/lib/nav-items";
-import { Logo } from "./logo";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { adminNav, teacherNav, studentNav } from "@/config/nav-config";
+import { Logo } from "./logo";
 
 
 export default function DashboardHeader({ title }: { title?: string }) {
@@ -28,7 +27,7 @@ export default function DashboardHeader({ title }: { title?: string }) {
   const currentNavItems = getNavItems();
 
   return (
-    <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6">
+    <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
        <div className="lg:hidden">
           <Sheet>
             <SheetTrigger asChild>
@@ -37,9 +36,12 @@ export default function DashboardHeader({ title }: { title?: string }) {
                 <span className="sr-only">Toggle navigation menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="flex flex-col">
-               <nav className="grid gap-2 text-lg font-medium">
-                <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6 mb-4">
+            <SheetContent side="left" className="flex flex-col p-0">
+               <SheetHeader className="p-6 pb-2">
+                 <SheetTitle className="sr-only">Menú de Navegación</SheetTitle>
+               </SheetHeader>
+               <nav className="grid gap-2 text-lg font-medium px-6">
+                <div className="flex h-14 items-center mb-4">
                   <Logo />
                 </div>
                 {currentNavItems.map((item) => (
