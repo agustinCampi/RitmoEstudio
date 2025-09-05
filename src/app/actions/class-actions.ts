@@ -115,3 +115,4 @@ export async function getClassesWithTeachers() {
         teacher_name: (cls.teacher as any)?.name || 'Desconocido'
     })) || [];
 }
+

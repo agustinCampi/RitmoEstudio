@@ -350,3 +350,4 @@ export default function ClassManagement({ initialClasses, initialTeachers }: Cla
     </div>
   );
 }
+

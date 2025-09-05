@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -13,35 +14,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
 import Link from 'next/link';
-import { Home, Users, Calendar, BookUser, Swords, LogOut, PanelLeft, ClipboardCheck } from 'lucide-react';
+import { Home, Users, Calendar, BookUser, LogOut, PanelLeft, ClipboardCheck, LayoutGrid } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
 import { Logo } from './logo';
-
-const adminNavItems = [
-  { href: '/dashboard', icon: Home, label: 'Inicio' },
-  { href: '/dashboard/calendar', icon: Calendar, label: 'Calendario' },
-  { href: '/dashboard/classes', icon: Swords, label: 'Gestionar Clases' },
-  { href: '/dashboard/students', icon: Users, label: 'Gestionar Alumnos' },
-];
-
-const teacherNavItems = [
-  { href: '/dashboard', icon: Home, label: 'Inicio' },
-  { href: '/dashboard/calendar', icon: Calendar, label: 'Calendario' },
-  { href: '/dashboard/assigned-classes', icon: ClipboardCheck, label: 'Mis Clases Asignadas' },
-  { href: '/dashboard/classes', icon: Swords, label: 'Catálogo de Clases' },
-  { href: '/dashboard/my-classes', icon: BookUser, label: 'Mis Clases Reservadas' },
-];
-
-const studentNavItems = [
-  { href: '/dashboard', icon: Home, label: 'Inicio' },
-  { href: '/dashboard/calendar', icon: Calendar, label: 'Calendario' },
-  { href: '/dashboard/classes', icon: Swords, label: 'Catálogo de Clases' },
-  { href: '/dashboard/my-classes', icon: BookUser, label: 'Mis Clases' },
-];
+import { adminNav, teacherNav, studentNav } from "@/config/nav-config";
 
 
-export function DashboardHeader({ title }: { title: string }) {
+export function DashboardHeader({ title, children }: { title: string, children?: React.ReactNode }) {
   const { user, logout } = useAuth();
   const pathname = usePathname();
 
@@ -52,12 +32,15 @@ export function DashboardHeader({ title }: { title: string }) {
       .join('');
   };
   
-  const navItems =
-    user?.role === 'admin'
-      ? adminNavItems
-      : user?.role === 'teacher'
-      ? teacherNavItems
-      : studentNavItems;
+  let navItems: { title: string; href: string; icon: React.ReactNode }[] = [];
+
+  if (user?.role === 'admin') {
+    navItems = adminNav;
+  } else if (user?.role === 'teacher') {
+    navItems = teacherNav;
+  } else if (user?.role === 'student') {
+    navItems = studentNav;
+  }
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 mb-4">
@@ -84,8 +67,8 @@ export function DashboardHeader({ title }: { title: string }) {
                   pathname === item.href && "text-foreground"
                   )}
                 >
-                  <item.icon className="h-5 w-5" />
-                  {item.label}
+                  {item.icon}
+                  {item.title}
                 </Link>
               ))}
                <button
@@ -100,6 +83,7 @@ export function DashboardHeader({ title }: { title: string }) {
         </Sheet>
       <h1 className="font-headline text-2xl md:text-3xl font-bold">{title}</h1>
       <div className="ml-auto flex items-center gap-4">
+        {children}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

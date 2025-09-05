@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { DashboardHeader } from '@/components/dashboard-header';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -84,8 +84,11 @@ export function TeacherManagement() {
 
   return (
     <div className="w-full">
-      <DashboardHeader title="Profesores" description="Gestiona los profesores del estudio.">
-         <Button onClick={openNewDialog}>Añadir Profesor</Button>
+      <DashboardHeader title="Gestionar Profesores">
+         <Button onClick={openNewDialog}>
+           <PlusCircle className="mr-2 h-4 w-4" />
+           Añadir Profesor
+          </Button>
       </DashboardHeader>
       <main className="p-4 sm:p-0">
         <Card>

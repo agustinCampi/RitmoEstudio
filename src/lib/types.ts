@@ -15,14 +15,15 @@ export interface Class {
   id: string;
   name: string;
   description: string;
-  teacher_id: string;
+  teacher_id: string; // The foreign key
   schedule: string;
   duration: number; // in minutes
   max_students: number;
   image: string;
   level: ClassLevel;
-  // Estos campos se añaden en el frontend y no existen en la DB
-  teacher_name?: string;
+  teacherName: string; // The denormalized name in the table
+  // This field is added dynamically from a join and is the one to use in the UI
+  teacher_name?: string; 
   booked_students?: number;
   'data-ai-hint'?: string;
 }

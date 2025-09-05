@@ -11,6 +11,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardContent,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -38,13 +39,17 @@ export default function MyClasses() {
       setLoading(true);
       const { data, error } = await supabase
         .from('classes')
-        .select('*')
+        .select('*, teacher:users(name)')
         .limit(2); 
 
       if (error) {
         toast({ title: "Error", description: "No se pudieron cargar tus clases reservadas.", variant: "destructive" });
       } else {
-        setMyBookings(data as Class[]);
+        const transformedData = data?.map(cls => ({
+            ...cls,
+            teacher_name: (cls.teacher as any)?.name || 'Desconocido'
+        })) || [];
+        setMyBookings(transformedData as Class[]);
       }
       setLoading(false);
     };
@@ -85,7 +90,7 @@ export default function MyClasses() {
             <div className="flex justify-between items-start">
                 <div>
                     <CardTitle className="font-headline font-bold">{cls.name}</CardTitle>
-                    <CardDescription>con {cls.teacherName}</CardDescription>
+                    <CardDescription>con {cls.teacher_name}</CardDescription>
                 </div>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>

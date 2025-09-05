@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Class, User } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getClassesWithTeachers } from "../actions/class-actions";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -22,11 +23,11 @@ export default function DashboardPage() {
   const fetchData = async () => {
     setLoading(true);
     const [classesRes, studentsRes] = await Promise.all([
-      supabase.from('classes').select('*'),
+      getClassesWithTeachers(), // Use the consistent server action
       supabase.from('users').select('*').eq('role', 'student')
     ]);
     
-    if (classesRes.data) setClasses(classesRes.data as Class[]);
+    setClasses(classesRes);
     if (studentsRes.data) setStudents(studentsRes.data as User[]);
 
     setLoading(false);
