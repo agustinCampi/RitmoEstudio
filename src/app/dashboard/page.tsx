@@ -45,8 +45,8 @@ export default function DashboardPage() {
         <p className="text-muted-foreground">Aquí puedes gestionar todos los aspectos del estudio de baile.</p>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card asChild>
-          <Link href="/dashboard/classes" className="hover:bg-muted/50 transition-colors block">
+        <Card className="hover:bg-muted/50 transition-colors">
+          <Link href="/dashboard/classes" className="block w-full h-full">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total de Clases</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -57,8 +57,8 @@ export default function DashboardPage() {
             </CardContent>
           </Link>
         </Card>
-        <Card asChild>
-          <Link href="/dashboard/students" className="hover:bg-muted/50 transition-colors block">
+        <Card className="hover:bg-muted/50 transition-colors">
+          <Link href="/dashboard/students" className="block w-full h-full">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total de Alumnos</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
@@ -91,30 +91,30 @@ export default function DashboardPage() {
      <div className="space-y-6">
         <p className="text-muted-foreground">Aquí puedes ver un resumen de tus clases y actividades.</p>
         <div className="grid gap-4 md:grid-cols-2">
-          <Link href="/dashboard/assigned-classes">
             <Card className="hover:bg-muted/50 transition-colors">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Clases Asignadas</CardTitle>
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                 {loading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{assignedClasses.length}</div>}
-                <p className="text-xs text-muted-foreground">Clases que impartes esta semana</p>
-              </CardContent>
+              <Link href="/dashboard/assigned-classes" className="block w-full h-full">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Clases Asignadas</CardTitle>
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  {loading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{assignedClasses.length}</div>}
+                  <p className="text-xs text-muted-foreground">Clases que impartes esta semana</p>
+                </CardContent>
+              </Link>
             </Card>
-          </Link>
-          <Link href="/dashboard/assigned-classes">
             <Card className="hover:bg-muted/50 transition-colors">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Próxima Clase</CardTitle>
-                 <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                 {loading ? <Skeleton className="h-6 w-3/4" /> : <div className="text-xl font-bold">{assignedClasses[0]?.name || 'Ninguna'}</div>}
-                 {loading ? <Skeleton className="h-4 w-1/2 mt-1" /> : <p className="text-xs text-muted-foreground">{assignedClasses[0]?.schedule || 'No hay clases próximas'}</p>}
-              </CardContent>
+              <Link href="/dashboard/assigned-classes" className="block w-full h-full">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Próxima Clase</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  {loading ? <Skeleton className="h-6 w-3/4" /> : <div className="text-xl font-bold">{assignedClasses[0]?.name || 'Ninguna'}</div>}
+                  {loading ? <Skeleton className="h-4 w-1/2 mt-1" /> : <p className="text-xs text-muted-foreground">{assignedClasses[0]?.schedule || 'No hay clases próximas'}</p>}
+                </CardContent>
+              </Link>
             </Card>
-          </Link>
         </div>
         <ClassCalendar classes={assignedClasses} loading={loading} highlightedClasses={assignedClasses} />
       </div>
@@ -130,30 +130,30 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <p className="text-muted-foreground">¡Prepárate para bailar! Aquí tienes un resumen de tu actividad.</p>
          <div className="grid gap-4 md:grid-cols-2">
-          <Link href="/dashboard/my-classes">
             <Card className="hover:bg-muted/50 transition-colors">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Mis Clases Reservadas</CardTitle>
-                <BookUser className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                 {loading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{myBookingsCount}</div>}
-                <p className="text-xs text-muted-foreground">Clases para esta semana</p>
-              </CardContent>
-            </Card>
-          </Link>
-          <Link href="/dashboard/classes">
-            <Card className="hover:bg-muted/50 transition-colors">
+              <Link href="/dashboard/my-classes" className="block w-full h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Tu Próxima Aventura</CardTitle>
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium">Mis Clases Reservadas</CardTitle>
+                  <BookUser className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  {loading ? <Skeleton className="h-6 w-3/4" /> : <div className="text-xl font-bold">{nextClass?.name || 'Explora el catálogo'}</div>}
-                  {loading ? <Skeleton className="h-4 w-1/2 mt-1" /> : <p className="text-xs text-muted-foreground">{nextClass ? `con ${nextClass.teacher_name}` : 'Reserva una clase'}</p>}
+                  {loading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{myBookingsCount}</div>}
+                  <p className="text-xs text-muted-foreground">Clases para esta semana</p>
                 </CardContent>
+              </Link>
             </Card>
-           </Link>
+            <Card className="hover:bg-muted/50 transition-colors">
+              <Link href="/dashboard/classes" className="block w-full h-full">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Tu Próxima Aventura</CardTitle>
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    {loading ? <Skeleton className="h-6 w-3/4" /> : <div className="text-xl font-bold">{nextClass?.name || 'Explora el catálogo'}</div>}
+                    {loading ? <Skeleton className="h-4 w-1/2 mt-1" /> : <p className="text-xs text-muted-foreground">{nextClass ? `con ${nextClass.teacher_name}` : 'Reserva una clase'}</p>}
+                  </CardContent>
+              </Link>
+           </Card>
         </div>
         <ClassCalendar classes={myClasses} highlightedClasses={myClasses} loading={loading} />
       </div>

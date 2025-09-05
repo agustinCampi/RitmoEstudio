@@ -12,9 +12,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
+import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import Link from 'next/link';
-import { Home, Users, Calendar, BookUser, LogOut, PanelLeft, ClipboardCheck, LayoutGrid } from 'lucide-react';
+import { LogOut, PanelLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
 import { Logo } from './logo';
@@ -32,11 +32,9 @@ export function DashboardHeader({ title, children }: { title: string, children?:
       .join('');
   };
   
-  let navItems: { title: string; href: string; icon: React.ReactNode }[] = [];
+  let navItems: { title: string; href: string; icon: React.ReactNode }[] = adminNav;
 
-  if (user?.role === 'admin') {
-    navItems = adminNav;
-  } else if (user?.role === 'teacher') {
+  if (user?.role === 'teacher') {
     navItems = teacherNav;
   } else if (user?.role === 'student') {
     navItems = studentNav;
@@ -52,11 +50,8 @@ export function DashboardHeader({ title, children }: { title: string, children?:
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="sm:max-w-xs">
-             <SheetHeader>
-              <SheetTitle>Navegación</SheetTitle>
-            </SheetHeader>
             <nav className="grid gap-6 text-lg font-medium mt-4">
-                <Link href="#" className="flex items-center gap-2 font-semibold">
+                <Link href="/dashboard" className="flex items-center gap-2 font-semibold mb-4">
                     <Logo />
                 </Link>
               {navItems.map((item) => (
@@ -73,7 +68,7 @@ export function DashboardHeader({ title, children }: { title: string, children?:
               ))}
                <button
                 onClick={logout}
-                className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground mt-auto"
               >
                 <LogOut className="h-5 w-5" />
                 Cerrar sesión
@@ -114,3 +109,5 @@ export function DashboardHeader({ title, children }: { title: string, children?:
     </header>
   );
 }
+
+    

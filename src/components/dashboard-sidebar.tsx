@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -14,46 +15,24 @@ import {
   Calendar,
   BookUser,
   LogOut,
-  Swords,
   ClipboardCheck,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { Logo } from '@/components/logo';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
-
-const adminNavItems = [
-  { href: '/dashboard', icon: Home, label: 'Inicio' },
-  { href: '/dashboard/calendar', icon: Calendar, label: 'Calendario' },
-  { href: '/dashboard/classes', icon: Swords, label: 'Gestionar Clases' },
-  { href: '/dashboard/students', icon: Users, label: 'Gestionar Alumnos' },
-];
-
-const teacherNavItems = [
-  { href: '/dashboard', icon: Home, label: 'Inicio' },
-  { href: '/dashboard/calendar', icon: Calendar, label: 'Calendario' },
-  { href: '/dashboard/assigned-classes', icon: ClipboardCheck, label: 'Mis Clases Asignadas' },
-  { href: '/dashboard/classes', icon: Swords, label: 'Catálogo de Clases' },
-  { href: '/dashboard/my-classes', icon: BookUser, label: 'Mis Clases Reservadas' },
-];
-
-const studentNavItems = [
-  { href: '/dashboard', icon: Home, label: 'Inicio' },
-  { href: '/dashboard/calendar', icon: Calendar, label: 'Calendario' },
-  { href: '/dashboard/classes', icon: Swords, label: 'Catálogo de Clases' },
-  { href: '/dashboard/my-classes', icon: BookUser, label: 'Mis Clases' },
-];
+import { adminNav, teacherNav, studentNav } from '@/config/nav-config';
 
 export default function DashboardSidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
-  const navItems =
-    user?.role === 'admin'
-      ? adminNavItems
-      : user?.role === 'teacher'
-      ? teacherNavItems
-      : studentNavItems;
+  let navItems = adminNav;
+  if (user?.role === 'teacher') {
+    navItems = teacherNav;
+  } else if (user?.role === 'student') {
+    navItems = studentNav;
+  }
 
   return (
     <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex">
@@ -63,7 +42,7 @@ export default function DashboardSidebar() {
             href="/dashboard"
             className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
           >
-            <Logo className="h-4 w-4" justIcon={true} />
+            <Logo />
             <span className="sr-only">RitmoEstudio</span>
           </Link>
 
@@ -77,11 +56,11 @@ export default function DashboardSidebar() {
                     (pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))) && 'bg-accent text-accent-foreground'
                   )}
                 >
-                  <item.icon className="h-5 w-5" />
-                  <span className="sr-only">{item.label}</span>
+                  {item.icon}
+                  <span className="sr-only">{item.title}</span>
                 </Link>
               </TooltipTrigger>
-              <TooltipContent side="right">{item.label}</TooltipContent>
+              <TooltipContent side="right">{item.title}</TooltipContent>
             </Tooltip>
           ))}
         </nav>
@@ -105,3 +84,5 @@ export default function DashboardSidebar() {
     </aside>
   );
 }
+
+    
