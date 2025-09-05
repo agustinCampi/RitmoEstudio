@@ -45,19 +45,19 @@ export async function upsertClass(formData: FormData) {
   const { id, ...classData } = validatedFields.data;
 
   let result;
+  
+  const payload = {
+    ...classData,
+    teacherName: teacherName,
+  };
 
   if (id) {
-    // Update: Keep teacherName and don't update the image
-    const updatePayload = {
-        ...classData,
-        teacherName: teacherName,
-    };
-    result = await supabase.from('classes').update(updatePayload).eq('id', id).select().single();
+    // Update: Don't update the image, but ensure teacherName is present.
+    result = await supabase.from('classes').update(payload).eq('id', id).select().single();
   } else {
     // Insert: Include the new image
     const insertPayload = {
-      ...classData,
-      teacherName: teacherName,
+      ...payload,
       image: `https://picsum.photos/600/400?random=${Date.now()}`,
     };
     result = await supabase.from('classes').insert(insertPayload).select().single();
@@ -97,15 +97,14 @@ export async function deleteClass(classId: string) {
 
 export async function getClassesWithTeachers() {
     const supabase = createAdminClient();
+    // Simplified query: The 'teacherName' column is already denormalized in the 'classes' table.
+    // No join is necessary, reducing complexity and potential points of failure.
     const { data, error } = await supabase
         .from('classes')
-        .select(`
-            *,
-            teacher_name:teacherName 
-        `);
+        .select(`*`);
 
     if (error) {
-        console.error("Error fetching classes with teachers:", error);
+        console.error("Error fetching classes:", error);
         return [];
     }
     
