@@ -54,24 +54,21 @@ export function ClassCalendar({ classes, highlightedClasses = [], loading = fals
 
     classes.forEach(cls => {
         const dayIndices = parseScheduleToDayIndex(cls.schedule);
-        const time = cls.schedule.split(',')[1]?.trim() || '';
+        const timePart = cls.schedule.split(',')[1]?.trim() || '';
 
         dayIndices.forEach(dayIndex => {
-            let classDay = addDays(startOfCurrentWeek, dayIndex);
-             // Adjust if start of week is Sunday and we have Monday
-            if (getDay(startOfCurrentWeek, { locale: es }) === 0 && dayIndex > 0) {
-                 classDay = addDays(startOfCurrentWeek, dayIndex);
-            } else if (getDay(startOfCurrentWeek, { locale: es }) !== 0) {
-                // Adjust for weeks starting on Monday
-                classDay = addDays(startOfWeek(today, { locale: es, weekStartsOn: 1 }), dayIndex-1);
-            }
+            let classDay = addDays(startOfCurrentWeek, dayIndex - getDay(startOfCurrentWeek, { locale: es }));
             
             const dateString = format(classDay, 'yyyy-MM-dd');
             if (!classMap.has(dateString)) {
                 classMap.set(dateString, []);
             }
-            if(!classMap.get(dateString)?.some(c => c.id === cls.id)) {
-               classMap.get(dateString)?.push({ ...cls, schedule: time });
+
+            const classWithTime = { ...cls, schedule: timePart };
+            const existingClasses = classMap.get(dateString) || [];
+            
+            if(!existingClasses.some(c => c.id === classWithTime.id)) {
+               classMap.set(dateString, [...existingClasses, classWithTime]);
             }
         });
     });
@@ -82,8 +79,8 @@ export function ClassCalendar({ classes, highlightedClasses = [], loading = fals
   
   const modifiers = {
     highlighted: Array.from(classesByDate.keys()).map(dateStr => {
-        const d = new Date(dateStr);
-        return new Date(d.valueOf() + d.getTimezoneOffset() * 60 * 1000);
+        const [year, month, day] = dateStr.split('-').map(Number);
+        return new Date(year, month - 1, day);
     }),
   };
 
@@ -146,7 +143,7 @@ export function ClassCalendar({ classes, highlightedClasses = [], loading = fals
             </h3>
             <div className="space-y-3 h-72 overflow-y-auto pr-2">
                 {selectedDayClasses.length > 0 ? (
-                    selectedDayClasses.map(cls => (
+                    selectedDayClasses.sort((a, b) => a.schedule.localeCompare(b.schedule)).map(cls => (
                         <Dialog key={cls.id}>
                             <DialogTrigger asChild>
                                 <div className={cn(
@@ -159,7 +156,7 @@ export function ClassCalendar({ classes, highlightedClasses = [], loading = fals
                                       <p className="font-bold text-sm">{cls.name}</p>
                                       {highlightedClassIds.has(cls.id) && <Star className="h-4 w-4 text-primary" />}
                                     </div>
-                                    <p className="text-xs text-muted-foreground">{cls.teacherName}</p>
+                                    <p className="text-xs text-muted-foreground">con {cls.teacher_name}</p>
                                     <div className="flex items-center gap-2 text-xs text-primary pt-1">
                                         <Clock className="h-3 w-3" />
                                         <span>{cls.schedule}</span>
@@ -168,14 +165,13 @@ export function ClassCalendar({ classes, highlightedClasses = [], loading = fals
                             </DialogTrigger>
                              <DialogContent>
                                 <DialogHeader>
-                                    <Badge variant="secondary" className="w-fit mb-2">{cls.category}</Badge>
                                     <DialogTitle className="font-headline text-2xl">{cls.name}</DialogTitle>
                                     <DialogDescription className="pt-2">{cls.description}</DialogDescription>
                                 </DialogHeader>
                                 <div className="grid grid-cols-2 gap-4 py-4 text-sm">
                                     <div className="flex items-center gap-2">
                                         <User className="h-4 w-4 text-primary" />
-                                        <span>Profesor: <span className="font-medium">{cls.teacherName}</span></span>
+                                        <span>Profesor: <span className="font-medium">{cls.teacher_name}</span></span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <CalendarIcon className="h-4 w-4 text-primary" />
@@ -187,7 +183,7 @@ export function ClassCalendar({ classes, highlightedClasses = [], loading = fals
                                     </div>
                                      <div className="flex items-center gap-2">
                                         <Users className="h-4 w-4 text-primary" />
-                                        <span>Cupos: <span className="font-medium">{cls.bookedStudents} / {cls.maxStudents}</span></span>
+                                        <span>Cupos: <span className="font-medium">{cls.booked_students} / {cls.max_students}</span></span>
                                     </div>
                                 </div>
                             </DialogContent>
@@ -204,3 +200,5 @@ export function ClassCalendar({ classes, highlightedClasses = [], loading = fals
     </Card>
   );
 }
+
+    
