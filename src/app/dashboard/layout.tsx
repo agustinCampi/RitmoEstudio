@@ -1,14 +1,32 @@
+
 "use client";
 
-import { ReactNode } from "react";
-import DashboardSidebar from "@/components/dashboard-sidebar";
+import { useAuth } from "@/hooks/use-auth";
+import { DashboardNav } from "@/components/dashboard-nav";
+import { adminNav, teacherNav, studentNav } from "@/config/nav-config";
 
-export default function DashboardLayout({ children }: { children: ReactNode }) {
+interface DashboardLayoutProps {
+  children: React.ReactNode;
+}
+
+export default function DashboardLayout({ children }: DashboardLayoutProps) {
+  const { user } = useAuth();
+
+  let navItems: { title: string; href: string; icon: React.ReactNode }[] = [];
+
+  if (user?.role === 'admin') {
+    navItems = adminNav;
+  } else if (user?.role === 'teacher') {
+    navItems = teacherNav;
+  } else if (user?.role === 'student') {
+    navItems = studentNav;
+  }
+
   return (
-    <div className="flex min-h-screen w-full bg-background">
-      <DashboardSidebar />
-      <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14 w-full">
-        <main className="flex-1 gap-4 p-4 sm:px-6 sm:py-0 md:gap-8 h-full">
+    <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+        <DashboardNav items={navItems} />
+      <div className="flex flex-col">
+        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
           {children}
         </main>
       </div>

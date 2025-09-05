@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { createContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, ReactNode, useContext } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import type { User } from '@/lib/types';
 import { createClient } from '@/lib/supabase/client';
@@ -67,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!loading) {
-      const isAuthPage = pathname === '/' || pathname === '/signup';
+      const isAuthPage = pathname === '/' || pathname === '/signup' || pathname === '/setup';
       if (!user && !isAuthPage) {
         router.push('/');
       }
@@ -87,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = { user, logout, loading };
 
-  if (loading) {
+  if (loading && (pathname !== '/setup')) {
     return (
       <div className="flex items-center justify-center h-screen w-screen bg-background">
         <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
@@ -97,3 +97,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
+
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (context === null) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
+};

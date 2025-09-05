@@ -15,34 +15,34 @@ export interface Class {
   id: string;
   name: string;
   description: string;
-  teacherId: string;
-  teacherName: string;
+  teacher_id: string;
   schedule: string;
   duration: number; // in minutes
-  maxStudents: number;
+  max_students: number;
   image: string;
-  category: string;
   level: ClassLevel;
-  bookedStudents?: number;
+  // Estos campos se añaden en el frontend y no existen en la DB
+  teacher_name?: string;
+  booked_students?: number;
   'data-ai-hint'?: string;
 }
 
 export interface Booking {
   id: string;
-  classId: string;
-  studentId: string;
-  bookingDate: Date;
+  class_id: string;
+  student_id: string;
+  booking_date: Date;
 }
 
 export interface Attendance {
   id: string;
-  classId: string;
-  studentId: string;
+  class_id: string;
+  student_id: string;
   date: Date;
   status: 'presente' | 'ausente';
 }
 
 export interface StudentProfile extends User {
-  joinedDate: Date;
-  bookedClasses: number;
+  joined_date: Date;
+  booked_classes: number;
 }

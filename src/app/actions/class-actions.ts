@@ -9,29 +9,29 @@ const classSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
   description: z.string().min(10, "La descripción es muy corta."),
-  teacherId: z.string().nonempty("Debes asignar un profesor."),
+  teacher_id: z.string().nonempty("Debes asignar un profesor."),
   schedule: z.string().nonempty("El horario es obligatorio."),
   duration: z.coerce.number().min(30, "La duración mínima es de 30 minutos."),
-  maxStudents: z.coerce.number().min(1, "Debe haber al menos un cupo."),
-  category: z.string().nonempty("La categoría es obligatoria."),
+  max_students: z.coerce.number().min(1, "Debe haber al menos un cupo."),
   level: z.enum(['principiante', 'intermedio', 'avanzado']),
-  teacherName: z.string(),
 });
 
 export async function upsertClass(formData: FormData) {
   const supabase = createAdminClient()
 
+  const teacherId = formData.get('teacher_id') as string;
+  const teacherNameResult = await supabase.from('users').select('name').eq('id', teacherId).single();
+  const teacherName = teacherNameResult.data?.name || 'Desconocido';
+
   const values = {
     id: formData.get('id') as string || undefined,
     name: formData.get('name') as string,
     description: formData.get('description') as string,
-    teacherId: formData.get('teacherId') as string,
+    teacher_id: teacherId,
     schedule: formData.get('schedule') as string,
     duration: formData.get('duration') as string,
-    maxStudents: formData.get('maxStudents') as string,
-    category: formData.get('category') as string,
+    max_students: formData.get('max_students') as string,
     level: formData.get('level') as 'principiante' | 'intermedio' | 'avanzado',
-    teacherName: formData.get('teacherName') as string,
   }
 
   const validatedFields = classSchema.safeParse(values)
@@ -45,17 +45,19 @@ export async function upsertClass(formData: FormData) {
   const { id, ...classData } = validatedFields.data;
 
   let result;
+  const payload = {
+      ...classData,
+      teacherName: teacherName,
+      image: `https://picsum.photos/600/400?random=${Date.now()}`,
+  };
+
   if (id) {
-    // Update
-    result = await supabase.from('classes').update(classData).eq('id', id).select().single();
+    // Update - remove image from payload as we don't want to update it
+    const { image, ...updatePayload } = payload;
+    result = await supabase.from('classes').update(updatePayload).eq('id', id).select().single();
   } else {
     // Insert
-    const newClassPayload = {
-      ...classData,
-      image: `https://picsum.photos/600/400?random=${Date.now()}`,
-      bookedStudents: 0,
-    };
-    result = await supabase.from('classes').insert(newClassPayload).select().single();
+    result = await supabase.from('classes').insert(payload).select().single();
   }
 
   const { error } = result;
@@ -87,4 +89,28 @@ export async function deleteClass(classId: string) {
     
     revalidatePath('/dashboard/classes');
     return { success: true };
+}
+
+
+export async function getClassesWithTeachers() {
+    const supabase = createAdminClient();
+    const { data, error } = await supabase
+        .from('classes')
+        .select(`
+            *,
+            teacher:users(name)
+        `);
+
+    if (error) {
+        console.error("Error fetching classes with teachers:", error);
+        return [];
+    }
+
+    // The type from Supabase for a join is complex. We manually map it to our simpler Class type.
+    const transformedData = data.map(cls => ({
+        ...cls,
+        teacher_name: Array.isArray(cls.teacher) ? 'Error' : cls.teacher?.name || 'Desconocido',
+    }));
+    
+    return transformedData;
 }

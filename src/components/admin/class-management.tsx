@@ -7,8 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { Class, ClassLevel, User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { createClient } from '@/lib/supabase/client';
-import { upsertClass, deleteClass } from '@/app/actions/class-actions';
+import { upsertClass, deleteClass, getClassesWithTeachers } from '@/app/actions/class-actions';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -49,11 +48,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 const classSchema = z.object({
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
   description: z.string().min(10, "La descripción es muy corta."),
-  teacherId: z.string().nonempty("Debes asignar un profesor."),
+  teacher_id: z.string().nonempty("Debes asignar un profesor."),
   schedule: z.string().nonempty("El horario es obligatorio."),
   duration: z.coerce.number().min(30, "La duración mínima es de 30 minutos."),
-  maxStudents: z.coerce.number().min(1, "Debe haber al menos un cupo."),
-  category: z.string().nonempty("La categoría es obligatoria."),
+  max_students: z.coerce.number().min(1, "Debe haber al menos un cupo."),
   level: z.enum(['principiante', 'intermedio', 'avanzado']),
 });
 
@@ -61,183 +59,115 @@ type ClassFormValues = z.infer<typeof classSchema>;
 
 const levels: (ClassLevel | 'Todos')[] = ["Todos", "principiante", "intermedio", "avanzado"];
 
+interface ClassManagementProps {
+  initialClasses: Class[];
+  initialTeachers: User[];
+}
 
-export default function ClassManagement() {
+export default function ClassManagement({ initialClasses, initialTeachers }: ClassManagementProps) {
   const { toast } = useToast();
-  const [classes, setClasses] = useState<Class[]>([]);
-  const [teachers, setTeachers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  // State is now initialized with server-provided props, removing the need for a loading state.
+  const [classes, setClasses] = useState<Class[]>(initialClasses);
+  const [teachers, setTeachers] = useState<User[]>(initialTeachers);
   const [isFormOpen, setFormOpen] = useState(false);
   const [editingClass, setEditingClass] = useState<Class | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Todas');
   const [selectedLevel, setSelectedLevel] = useState<ClassLevel | 'Todos'>('Todos');
-  const [categories, setCategories] = useState<string[]>(["Todas"]);
-
   const [isPending, startTransition] = useTransition();
 
-  const supabase = createClient();
+  // This function is now used to refresh data after a mutation (create, update, delete)
+  const refreshData = async () => {
+    const classesData = await getClassesWithTeachers();
+    setClasses(classesData);
+  };
 
   const form = useForm<ClassFormValues>({
     resolver: zodResolver(classSchema),
+    defaultValues: {
+        name: '',
+        description: '',
+        teacher_id: '',
+        schedule: '',
+        duration: 60,
+        max_students: 10,
+        level: 'principiante'
+    }
   });
 
-  const fetchData = async () => {
-      setLoading(true);
-      
-      const { data: classesData, error: classesError } = await supabase.from('classes').select('*');
-      if (classesError) {
-        toast({ title: "Error", description: "No se pudieron cargar las clases.", variant: "destructive" });
-        console.error(classesError);
-      } else {
-        setClasses(classesData as Class[]);
-        const uniqueCategories = ["Todas", ...new Set(classesData.map((c: Class) => c.category))];
-        setCategories(uniqueCategories);
-      }
-      
-      const { data: teachersData, error: teachersError } = await supabase.from('users').select('*').eq('role', 'teacher');
-      if (teachersError) {
-        toast({ title: "Error", description: "No se pudieron cargar los profesores.", variant: "destructive" });
-        console.error(teachersError);
-      } else {
-        setTeachers(teachersData as User[]);
-      }
 
-      setLoading(false);
-    };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-  
   const handleOpenForm = (cls: Class | null = null) => {
     setEditingClass(cls);
     if (cls) {
       form.reset({
         name: cls.name,
         description: cls.description,
-        teacherId: cls.teacherId,
+        teacher_id: cls.teacher_id,
         schedule: cls.schedule,
         duration: cls.duration,
-        maxStudents: cls.maxStudents,
-        category: cls.category,
+        max_students: cls.max_students,
         level: cls.level,
       });
     } else {
       form.reset({
-        name: '', description: '', teacherId: '', schedule: '', duration: 60, maxStudents: 10, category: '', level: 'principiante'
+        name: '', description: '', teacher_id: '', schedule: '', duration: 60, max_students: 10, level: 'principiante'
       });
     }
     setFormOpen(true);
   };
-  
+
   const onSubmit = (data: ClassFormValues) => {
     startTransition(async () => {
-        const teacher = teachers.find(t => t.id === data.teacherId);
-        if (!teacher) {
-            toast({ title: "Error", description: "Profesor no encontrado.", variant: "destructive" });
-            return;
-        }
+      const formData = new FormData();
+      if (editingClass) {
+        formData.append('id', editingClass.id);
+      }
+      Object.keys(data).forEach(key => {
+          const value = (data as any)[key];
+          formData.append(key, String(value));
+      });
 
-        const formData = new FormData();
-        if (editingClass) {
-            formData.append('id', editingClass.id);
-        }
-        formData.append('name', data.name);
-        formData.append('description', data.description);
-        formData.append('teacherId', data.teacherId);
-        formData.append('teacherName', teacher.name);
-        formData.append('schedule', data.schedule);
-        formData.append('duration', String(data.duration));
-        formData.append('maxStudents', String(data.maxStudents));
-        formData.append('category', data.category);
-        formData.append('level', data.level);
+      const result = await upsertClass(formData);
 
-        const result = await upsertClass(formData);
-
-        if (result?.error) {
-            toast({ title: `Error al ${editingClass ? 'actualizar' : 'crear'}`, description: result.error.message, variant: "destructive" });
-        } else {
-            toast({ title: `Clase ${editingClass ? 'actualizada' : 'creada'}`, description: `La clase "${data.name}" ha sido guardada.` });
-            await fetchData(); // Refetch all data
-            setFormOpen(false);
-        }
+       if (result?.errors) {
+        const fieldErrors = result.errors;
+        Object.keys(fieldErrors).forEach((field) => {
+            const message = (fieldErrors as any)[field]?.join(', ');
+            (form.setError as any)(field, { type: 'server', message });
+        });
+        toast({ title: `Error al ${editingClass ? 'actualizar' : 'crear'} la clase`, description: "Por favor, revisa los campos del formulario.", variant: "destructive" });
+      } else if (result?.error) {
+        toast({ title: `Error al ${editingClass ? 'actualizar' : 'crear'}`, description: result.error.message, variant: "destructive" });
+      } else {
+        toast({ title: `Clase ${editingClass ? 'actualizada' : 'creada'}`, description: `La clase "${data.name}" ha sido guardada.` });
+        await refreshData();
+        setFormOpen(false);
+      }
     });
   };
 
   const handleDelete = async (classId: string) => {
     startTransition(async () => {
-        const result = await deleteClass(classId);
-        if (result.error) {
-            toast({ title: "Error al eliminar", description: result.error.message, variant: "destructive" });
-        } else {
-            toast({ title: "Clase eliminada", variant: "destructive" });
-            await fetchData(); // Refetch
-        }
+      const result = await deleteClass(classId);
+      if (result.error) {
+        toast({ title: "Error al eliminar", description: result.error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Clase eliminada", variant: "destructive" });
+        await refreshData();
+      }
     });
   };
-  
+
   const filteredClasses = useMemo(() => {
     return classes.filter(cls => {
-      const matchesCategory = selectedCategory === 'Todas' || cls.category === selectedCategory;
       const matchesLevel = selectedLevel === 'Todos' || cls.level === selectedLevel;
-      const matchesSearch = searchTerm === '' || 
-                            cls.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                            cls.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            cls.teacherName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            cls.level.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesCategory && matchesLevel && matchesSearch;
+      const matchesSearch = searchTerm === '' ||
+        cls.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        cls.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (cls.teacher_name && cls.teacher_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        cls.level.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesLevel && matchesSearch;
     });
-  }, [searchTerm, selectedCategory, selectedLevel, classes]);
-
-
-  const NotifyStudentsDialog = ({ classId }: { classId: string }) => {
-    const [message, setMessage] = useState('');
-    
-    const handleSendNotification = () => {
-      console.log("Webhook a Make.com o Supabase Edge Function (Enviar Notificación):", { id_clase: classId, mensaje_personalizado: message });
-      toast({
-        title: "Notificación enviada",
-        description: "Los alumnos inscritos recibirán un email con el mensaje.",
-      });
-    };
-
-    return (
-      <Dialog>
-        <DialogTrigger asChild>
-          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-            <Bell className="mr-2 h-4 w-4" /> Notificar Cambios
-          </DropdownMenuItem>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Notificar Cambios a Alumnos</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <p className="text-sm text-muted-foreground">Escribe un mensaje para los alumnos inscritos en esta clase. Se les enviará por email.</p>
-            <Textarea 
-              placeholder="Ej: La clase de hoy se ha movido al salón B."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              rows={4}
-            />
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Cancelar</Button>
-            </DialogClose>
-            <DialogClose asChild>
-              <Button onClick={handleSendNotification} disabled={!message.trim()}>Enviar Notificación</Button>
-            </DialogClose>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
-  };
-  
-  if (loading) {
-    return <div className="text-center py-12">Cargando clases...</div>;
-  }
+  }, [searchTerm, selectedLevel, classes]);
   
   return (
     <div className="space-y-6">
@@ -259,16 +189,6 @@ export default function ClassManagement() {
           />
         </div>
         <div className="flex items-center gap-4">
-            <Select onValueChange={setSelectedCategory} defaultValue={selectedCategory}>
-                <SelectTrigger className="w-full md:w-[180px]">
-                    <SelectValue placeholder="Categoría" />
-                </SelectTrigger>
-                <SelectContent>
-                    {categories.map(category => (
-                        <SelectItem key={category} value={category}>{category}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
             <Select onValueChange={(value) => setSelectedLevel(value as ClassLevel | 'Todos')} defaultValue={selectedLevel}>
                 <SelectTrigger className="w-full md:w-[180px]">
                     <SelectValue placeholder="Nivel" />
@@ -289,8 +209,7 @@ export default function ClassManagement() {
                   <CardHeader>
                     <div className="flex justify-between items-start">
                         <div className="flex-grow">
-                            <Badge variant="secondary" className="w-fit mb-2">{cls.category}</Badge>
-                            <CardTitle>{cls.name}</CardTitle>
+                           <CardTitle>{cls.name}</CardTitle>
                             <CardDescription className="capitalize">{cls.level}</CardDescription>
                         </div>
                         <DropdownMenu>
@@ -304,7 +223,6 @@ export default function ClassManagement() {
                              <DropdownMenuItem onClick={() => handleOpenForm(cls)}>
                                 <Edit className="mr-2 h-4 w-4" /> Editar
                              </DropdownMenuItem>
-                             <NotifyStudentsDialog classId={cls.id} />
                              <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                   <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:text-red-500">
@@ -316,7 +234,7 @@ export default function ClassManagement() {
                                     <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                                     <AlertDialogDescription>
                                       Esta acción no se puede deshacer. Se eliminará la clase permanentemente.
-                                    </AlertDialogDescription>
+                                    </d>AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
                                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
@@ -334,7 +252,7 @@ export default function ClassManagement() {
                   <CardContent className="flex-grow space-y-3 text-sm">
                     <div className="flex items-center gap-2 text-muted-foreground">
                         <UserIcon className="h-4 w-4" />
-                        <span>Prof: {cls.teacherName}</span>
+                        <span>Prof: {cls.teacher_name}</span>
                     </div>
                     <div className="flex items-center gap-2 text-muted-foreground">
                         <Clock className="h-4 w-4" />
@@ -344,7 +262,7 @@ export default function ClassManagement() {
                   <CardFooter className="bg-muted/50 p-4 flex justify-center items-center rounded-b-lg">
                     <div className="flex items-center gap-2">
                         <Users className="h-4 w-4 text-primary" />
-                        <span className="font-bold">{cls.bookedStudents || 0} / {cls.maxStudents}</span>
+                        <span className="font-bold">{cls.booked_students || 0} / {cls.max_students}</span>
                         <span className="text-muted-foreground">Cupos</span>
                     </div>
                   </CardFooter>
@@ -375,29 +293,17 @@ export default function ClassManagement() {
                 {form.formState.errors.description && <p className="text-sm text-destructive">{form.formState.errors.description.message}</p>}
               </div>
               <div>
-                <Label htmlFor="teacherId">Profesor</Label>
-                <Select onValueChange={(value) => form.setValue('teacherId', value)} defaultValue={form.getValues('teacherId')}>
+                <Label htmlFor="teacher_id">Profesor</Label>
+                <Select onValueChange={(value) => form.setValue('teacher_id', value)} defaultValue={form.getValues('teacher_id')}>
                   <SelectTrigger><SelectValue placeholder="Selecciona un profesor" /></SelectTrigger>
                   <SelectContent>
                     {teachers.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                 {form.formState.errors.teacherId && <p className="text-sm text-destructive">{form.formState.errors.teacherId.message}</p>}
+                 {form.formState.errors.teacher_id && <p className="text-sm text-destructive">{form.formState.errors.teacher_id.message}</p>}
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="category">Categoría</Label>
-                  <Select onValueChange={(value) => form.setValue('category', value)} defaultValue={form.getValues('category')}>
-                    <SelectTrigger><SelectValue placeholder="Selecciona una categoría" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Ritmos Latinos">Ritmos Latinos</SelectItem>
-                      <SelectItem value="Danza Urbana">Danza Urbana</SelectItem>
-                      <SelectItem value="Danza Clásica">Danza Clásica</SelectItem>
-                      <SelectItem value="Baile Moderno">Baile Moderno</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {form.formState.errors.category && <p className="text-sm text-destructive">{form.formState.errors.category.message}</p>}
-                </div>
+              
+              <div className="grid grid-cols-1 gap-4">
                  <div>
                   <Label htmlFor="level">Nivel</Label>
                   <Select onValueChange={(value) => form.setValue('level', value as ClassLevel)} defaultValue={form.getValues('level')}>
@@ -423,9 +329,9 @@ export default function ClassManagement() {
                     {form.formState.errors.duration && <p className="text-sm text-destructive">{form.formState.errors.duration.message}</p>}
                  </div>
                  <div>
-                    <Label htmlFor="maxStudents">Cupos máximos</Label>
-                    <Input id="maxStudents" type="number" {...form.register('maxStudents')} />
-                    {form.formState.errors.maxStudents && <p className="text-sm text-destructive">{form.formState.errors.maxStudents.message}</p>}
+                    <Label htmlFor="max_students">Cupos máximos</Label>
+                    <Input id="max_students" type="number" {...form.register('max_students')} />
+                    {form.formState.errors.max_students && <p className="text-sm text-destructive">{form.formState.errors.max_students.message}</p>}
                  </div>
               </div>
               <DialogFooter>

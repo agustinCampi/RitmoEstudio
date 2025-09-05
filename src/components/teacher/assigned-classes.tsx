@@ -36,7 +36,7 @@ export default function AssignedClasses() {
       const { data, error } = await supabase
         .from('classes')
         .select('*')
-        .eq('teacherId', user.id);
+        .eq('teacher_id', user.id);
       
       if (error) {
         toast({ title: "Error", description: "No se pudieron cargar tus clases.", variant: "destructive" });
@@ -102,7 +102,7 @@ export default function AssignedClasses() {
             </CardContent>
           <CardFooter className="flex justify-between items-center p-6">
             <div>
-              <span className="font-bold">{cls.bookedStudents} / {cls.maxStudents}</span>
+              <span className="font-bold">{cls.booked_students} / {cls.max_students}</span>
               <span className="text-sm text-muted-foreground"> alumnos</span>
             </div>
             <Link href={`/dashboard/attendance/${cls.id}`} passHref>

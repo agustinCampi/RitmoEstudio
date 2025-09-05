@@ -83,7 +83,7 @@ export default function DashboardPage() {
   );
   
   const TeacherDashboard = () => {
-    const assignedClasses = classes.filter(c => c.teacherId === user?.id);
+    const assignedClasses = classes.filter(c => c.teacher_id === user?.id);
     return (
      <div className="space-y-6">
         <p className="text-muted-foreground">Aquí puedes ver un resumen de tus clases y actividades.</p>
@@ -121,7 +121,7 @@ export default function DashboardPage() {
   const StudentDashboard = () => {
      // This would come from a 'bookings' table
      const myBookingsCount = 0; 
-     const myClasses = classes.filter(c => c.bookedStudents && c.bookedStudents > 0); // Placeholder
+     const myClasses = classes.filter(c => c.booked_students && c.booked_students > 0); // Placeholder
      const nextClass = myClasses[0];
 
     return (
@@ -148,7 +148,7 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                   {loading ? <Skeleton className="h-6 w-3/4" /> : <div className="text-xl font-bold">{nextClass?.name || 'Explora el catálogo'}</div>}
-                  {loading ? <Skeleton className="h-4 w-1/2 mt-1" /> : <p className="text-xs text-muted-foreground">{nextClass ? `con ${nextClass.teacherName}` : 'Reserva una clase'}</p>}
+                  {loading ? <Skeleton className="h-4 w-1/2 mt-1" /> : <p className="text-xs text-muted-foreground">{nextClass ? `con ${nextClass.teacher_name}` : 'Reserva una clase'}</p>}
                 </CardContent>
             </Card>
            </Link>

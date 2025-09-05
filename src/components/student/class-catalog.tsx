@@ -1,11 +1,10 @@
 
 "use client";
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import type { Class, ClassLevel } from '@/lib/types';
-import { createClient } from '@/lib/supabase/client';
 
 import {
   Card,
@@ -20,39 +19,23 @@ import { Badge } from '@/components/ui/badge';
 import { Book, Check, Search } from 'lucide-react';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Skeleton } from '../ui/skeleton';
 
 const levels: (ClassLevel | 'Todos')[] = ["Todos", "principiante", "intermedio", "avanzado"];
 
-export default function ClassCatalog() {
+// The component now accepts the initial data from the server-rendered page
+interface ClassCatalogProps {
+  initialClasses: Class[];
+}
+
+export default function ClassCatalog({ initialClasses }: ClassCatalogProps) {
   const { toast } = useToast();
-  const [classes, setClasses] = useState<Class[]>([]);
-  const [loading, setLoading] = useState(true);
+  // The state is initialized directly with the props. No more client-side fetching or loading state needed.
+  const [classes, setClasses] = useState<Class[]>(initialClasses);
   const [bookedClasses, setBookedClasses] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Todas');
   const [selectedLevel, setSelectedLevel] = useState<ClassLevel | 'Todos'>('Todos');
-  const [categories, setCategories] = useState<string[]>(["Todas"]);
-  const supabase = createClient();
 
-
-  useEffect(() => {
-    const fetchClasses = async () => {
-      setLoading(true);
-      const { data, error } = await supabase.from('classes').select('*');
-      if (error) {
-        toast({ title: "Error", description: "No se pudieron cargar las clases.", variant: "destructive" });
-        console.error(error);
-      } else {
-        setClasses(data as Class[]);
-        const uniqueCategories = ["Todas", ...new Set(data.map((c: Class) => c.category))];
-        setCategories(uniqueCategories);
-      }
-      setLoading(false);
-    };
-    fetchClasses();
-  }, [toast]);
-
+  // The useEffect to fetch data has been removed entirely.
 
   const handleBookClass = (classId: string, className: string) => {
     if (bookedClasses.includes(classId)) return;
@@ -68,45 +51,20 @@ export default function ClassCatalog() {
   };
   
   const filteredClasses = useMemo(() => {
+    // We use the `classes` state which is populated from the server props
     return classes.filter(cls => {
-      const matchesCategory = selectedCategory === 'Todas' || cls.category === selectedCategory;
       const matchesLevel = selectedLevel === 'Todos' || cls.level === selectedLevel;
+      const teacherName = cls.teacher_name || '';
       const matchesSearch = searchTerm === '' || 
                             cls.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                             cls.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            cls.teacherName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            teacherName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             cls.level.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesCategory && matchesLevel && matchesSearch;
+      return matchesLevel && matchesSearch;
     });
-  }, [searchTerm, selectedCategory, selectedLevel, classes]);
+  }, [searchTerm, selectedLevel, classes]);
   
-  if (loading) {
-    return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <Skeleton className="h-10 w-1/3" />
-                <div className="flex gap-4">
-                    <Skeleton className="h-10 w-[180px]" />
-                    <Skeleton className="h-10 w-[180px]" />
-                </div>
-            </div>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {[...Array(3)].map((_, i) => (
-                    <Card key={i}>
-                        <Skeleton className="h-48 w-full" />
-                        <CardContent className="p-6 space-y-2">
-                            <Skeleton className="h-4 w-1/4" />
-                            <Skeleton className="h-6 w-3/4" />
-                            <Skeleton className="h-4 w-1/2" />
-                            <Skeleton className="h-10 w-full mt-4" />
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
-        </div>
-    );
-  }
-
+  // No more loading state needed. The data is available on initial render.
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -120,16 +78,6 @@ export default function ClassCatalog() {
           />
         </div>
         <div className="flex items-center gap-4">
-            <Select onValueChange={setSelectedCategory} defaultValue={selectedCategory}>
-                <SelectTrigger className="w-full md:w-[180px]">
-                    <SelectValue placeholder="Categoría" />
-                </SelectTrigger>
-                <SelectContent>
-                    {categories.map(category => (
-                        <SelectItem key={category} value={category}>{category}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
             <Select onValueChange={(value) => setSelectedLevel(value as ClassLevel | 'Todos')} defaultValue={selectedLevel}>
                 <SelectTrigger className="w-full md:w-[180px]">
                     <SelectValue placeholder="Nivel" />
@@ -147,14 +95,14 @@ export default function ClassCatalog() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredClasses.map(cls => {
                 const isBooked = bookedClasses.includes(cls.id);
-                const isFull = (cls.bookedStudents || 0) >= cls.maxStudents;
+                const isFull = (cls.booked_students || 0) >= cls.max_students;
                 
                 return (
                 <Card key={cls.id} className="flex flex-col bg-card hover:bg-muted/50 transition-colors">
                     <CardHeader className="p-0">
                     <div className="relative h-48 w-full">
                         <Image
-                        src={cls.image}
+                        src={cls.image || '/placeholder.jpg'} // Add a fallback image
                         alt={cls.name}
                         fill
                         className="object-cover rounded-t-lg"
@@ -163,12 +111,11 @@ export default function ClassCatalog() {
                     </div>
                     </CardHeader>
                     <CardContent className="flex-grow p-6 space-y-2">
-                        <div className="flex justify-between items-center">
-                          <Badge variant="secondary" className="w-fit">{cls.category}</Badge>
+                        <div className="flex justify-end items-center">
                           <Badge variant="outline" className="capitalize">{cls.level}</Badge>
                         </div>
                         <CardTitle className="font-bold font-headline pt-2">{cls.name}</CardTitle>
-                        <CardDescription>con {cls.teacherName}</CardDescription>
+                        <CardDescription>con {cls.teacher_name || 'Profesor no asignado'}</CardDescription>
                         <p className="text-sm pt-2">{cls.description}</p>
                     </CardContent>
                     <CardFooter className="flex justify-end items-center p-6">
