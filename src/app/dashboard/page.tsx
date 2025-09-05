@@ -15,7 +15,7 @@ import { getClassesWithTeachers } from "../actions/class-actions";
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const [classes, setClasses] = useState<Class[]>([]);
+  const [classes, setClasses] = useState<(Class & { teacher_name: string })[]>([]);
   const [students, setStudents] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
@@ -27,7 +27,7 @@ export default function DashboardPage() {
       supabase.from('users').select('*').eq('role', 'student')
     ]);
     
-    setClasses(classesRes as Class[]);
+    setClasses(classesRes as (Class & { teacher_name: string })[]);
     if (studentsRes.data) setStudents(studentsRes.data as User[]);
 
     setLoading(false);
@@ -45,8 +45,8 @@ export default function DashboardPage() {
         <p className="text-muted-foreground">Aquí puedes gestionar todos los aspectos del estudio de baile.</p>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Link href="/dashboard/classes">
-          <Card className="hover:bg-muted/50 transition-colors">
+        <Card asChild>
+          <Link href="/dashboard/classes" className="hover:bg-muted/50 transition-colors block">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total de Clases</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -55,10 +55,10 @@ export default function DashboardPage() {
               {loading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{classes.length}</div>}
               <p className="text-xs text-muted-foreground">Clases activas actualmente</p>
             </CardContent>
-          </Card>
-        </Link>
-        <Link href="/dashboard/students">
-          <Card className="hover:bg-muted/50 transition-colors">
+          </Link>
+        </Card>
+        <Card asChild>
+          <Link href="/dashboard/students" className="hover:bg-muted/50 transition-colors block">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total de Alumnos</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
@@ -67,8 +67,8 @@ export default function DashboardPage() {
               {loading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{students.length}</div>}
               <p className="text-xs text-muted-foreground">Alumnos registrados en el sistema</p>
             </CardContent>
-          </Card>
-        </Link>
+          </Link>
+        </Card>
          <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Reservas Totales</CardTitle>
@@ -172,3 +172,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
