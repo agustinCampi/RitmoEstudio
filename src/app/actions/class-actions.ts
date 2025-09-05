@@ -45,19 +45,22 @@ export async function upsertClass(formData: FormData) {
   const { id, ...classData } = validatedFields.data;
 
   let result;
-  const payload = {
+
+  if (id) {
+    // Update: Keep teacherName but don't update the image
+    const updatePayload = {
+        ...classData,
+        teacherName: teacherName,
+    };
+    result = await supabase.from('classes').update(updatePayload).eq('id', id).select().single();
+  } else {
+    // Insert: Include the new image
+    const insertPayload = {
       ...classData,
       teacherName: teacherName,
       image: `https://picsum.photos/600/400?random=${Date.now()}`,
-  };
-
-  if (id) {
-    // Update - remove image from payload as we don't want to update it
-    const { image, ...updatePayload } = payload;
-    result = await supabase.from('classes').update(updatePayload).eq('id', id).select().single();
-  } else {
-    // Insert
-    result = await supabase.from('classes').insert(payload).select().single();
+    };
+    result = await supabase.from('classes').insert(insertPayload).select().single();
   }
 
   const { error } = result;
@@ -97,20 +100,23 @@ export async function getClassesWithTeachers() {
     const { data, error } = await supabase
         .from('classes')
         .select(`
-            *,
-            teacher:users(name)
+            id,
+            name,
+            description,
+            teacher_id,
+            schedule,
+            duration,
+            max_students,
+            level,
+            image,
+            booked_students,
+            teacher_name
         `);
 
     if (error) {
         console.error("Error fetching classes with teachers:", error);
         return [];
     }
-
-    // The type from Supabase for a join is complex. We manually map it to our simpler Class type.
-    const transformedData = data.map(cls => ({
-        ...cls,
-        teacher_name: Array.isArray(cls.teacher) ? 'Error' : cls.teacher?.name || 'Desconocido',
-    }));
     
-    return transformedData;
+    return data || [];
 }
