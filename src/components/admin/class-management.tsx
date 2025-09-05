@@ -160,8 +160,7 @@ export default function ClassManagement({ initialClasses, initialTeachers }: Cla
   const filteredClasses = useMemo(() => {
     return classes.filter(cls => {
       const matchesLevel = selectedLevel === 'Todos' || cls.level === selectedLevel;
-      // CORRECTED: Use `teacherName` as it is the actual column name in the `classes` table.
-      const teacherName = cls.teacherName || '';
+      const teacherName = cls.teacher_name || '';
       const matchesSearch = searchTerm === '' ||
         cls.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         cls.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -254,7 +253,7 @@ export default function ClassManagement({ initialClasses, initialTeachers }: Cla
                   <CardContent className="flex-grow space-y-3 text-sm">
                     <div className="flex items-center gap-2 text-muted-foreground">
                         <UserIcon className="h-4 w-4" />
-                        <span>Prof: {cls.teacherName}</span>
+                        <span>Prof: {cls.teacher_name}</span>
                     </div>
                     <div className="flex items-center gap-2 text-muted-foreground">
                         <Clock className="h-4 w-4" />
