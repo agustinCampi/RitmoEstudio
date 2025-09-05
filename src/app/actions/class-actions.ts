@@ -47,7 +47,7 @@ export async function upsertClass(formData: FormData) {
   let result;
 
   if (id) {
-    // Update: Keep teacherName but don't update the image
+    // Update: Keep teacherName and don't update the image
     const updatePayload = {
         ...classData,
         teacherName: teacherName,
@@ -100,17 +100,8 @@ export async function getClassesWithTeachers() {
     const { data, error } = await supabase
         .from('classes')
         .select(`
-            id,
-            name,
-            description,
-            teacher_id,
-            schedule,
-            duration,
-            max_students,
-            level,
-            image,
-            booked_students,
-            teacher_name
+            *,
+            teacher_name:teacherName 
         `);
 
     if (error) {

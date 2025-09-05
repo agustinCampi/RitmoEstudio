@@ -160,10 +160,11 @@ export default function ClassManagement({ initialClasses, initialTeachers }: Cla
   const filteredClasses = useMemo(() => {
     return classes.filter(cls => {
       const matchesLevel = selectedLevel === 'Todos' || cls.level === selectedLevel;
+      const teacherName = cls.teacher_name || '';
       const matchesSearch = searchTerm === '' ||
         cls.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         cls.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (cls.teacherName && cls.teacherName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        teacherName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         cls.level.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesLevel && matchesSearch;
     });
@@ -252,7 +253,7 @@ export default function ClassManagement({ initialClasses, initialTeachers }: Cla
                   <CardContent className="flex-grow space-y-3 text-sm">
                     <div className="flex items-center gap-2 text-muted-foreground">
                         <UserIcon className="h-4 w-4" />
-                        <span>Prof: {cls.teacherName}</span>
+                        <span>Prof: {cls.teacher_name}</span>
                     </div>
                     <div className="flex items-center gap-2 text-muted-foreground">
                         <Clock className="h-4 w-4" />
@@ -349,5 +350,3 @@ export default function ClassManagement({ initialClasses, initialTeachers }: Cla
     </div>
   );
 }
-
-    
