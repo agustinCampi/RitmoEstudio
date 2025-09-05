@@ -1,9 +1,7 @@
-
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { DashboardHeader } from "@/components/dashboard-header";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Calendar, Users, BookUser } from "lucide-react";
 import { ClassCalendar } from "@/components/dashboard/class-calendar";
 import Link from "next/link";
@@ -41,9 +39,7 @@ export default function DashboardPage() {
 
   const AdminDashboard = () => (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <p className="text-muted-foreground">Aquí puedes gestionar todos los aspectos del estudio de baile.</p>
-      </div>
+       <p className="text-muted-foreground">Aquí puedes gestionar todos los aspectos del estudio de baile.</p>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card className="hover:bg-muted/50 transition-colors relative">
           <Link href="/dashboard/classes" className="absolute inset-0 z-10" aria-label="Ver clases" />
@@ -156,14 +152,11 @@ export default function DashboardPage() {
 
 
   return (
-    <div className="w-full">
-      <DashboardHeader title={`¡Hola, ${user?.name.split(' ')[0]}!`} />
-      <div className="p-4 sm:p-0">
+    <div className="w-full space-y-4">
+       <h1 className="text-3xl font-bold tracking-tight">{`¡Hola, ${user?.name.split(' ')[0]}!`}</h1>
         {user?.role === 'admin' && <AdminDashboard />}
         {user?.role === 'teacher' && <TeacherDashboard />}
         {user?.role === 'student' && <StudentDashboard />}
-      </div>
     </div>
   );
 }
-    

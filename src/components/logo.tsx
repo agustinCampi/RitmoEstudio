@@ -14,5 +14,3 @@ export function Logo({ justIcon = false }: LogoProps) {
     </Link>
   );
 }
-
-    

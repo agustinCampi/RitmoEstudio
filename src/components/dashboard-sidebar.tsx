@@ -1,88 +1,56 @@
-
-"use client";
+'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import {
-  Home,
-  Users,
-  Calendar,
-  BookUser,
-  LogOut,
-  ClipboardCheck,
-} from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
-import { Logo } from '@/components/logo';
 import { cn } from '@/lib/utils';
-import { Button } from './ui/button';
+import { Logo } from './logo';
+import { useAuth } from '@/hooks/use-auth';
 import { adminNav, teacherNav, studentNav } from '@/config/nav-config';
 
 export default function DashboardSidebar() {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
-  let navItems = adminNav;
-  if (user?.role === 'teacher') {
-    navItems = teacherNav;
-  } else if (user?.role === 'student') {
-    navItems = studentNav;
-  }
+  const getNavItems = () => {
+    if (!user) return [];
+    switch (user.role) {
+      case 'admin':
+        return adminNav;
+      case 'teacher':
+        return teacherNav;
+      case 'student':
+        return studentNav;
+      default:
+        return [];
+    }
+  };
+
+  const navItems = getNavItems();
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex">
-      <TooltipProvider>
-        <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
-          <Link
-            href="/dashboard"
-            className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
-          >
-            <Logo />
-            <span className="sr-only">RitmoEstudio</span>
-          </Link>
-
-          {navItems.map((item) => (
-            <Tooltip key={item.href}>
-              <TooltipTrigger asChild>
-                <Link
-                  href={item.href}
-                  className={cn(
-                    'flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8',
-                    (pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))) && 'bg-accent text-accent-foreground'
-                  )}
-                >
-                  {item.icon}
-                  <span className="sr-only">{item.title}</span>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side="right">{item.title}</TooltipContent>
-            </Tooltip>
-          ))}
-        </nav>
-        <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={logout}
-                variant="ghost"
-                size="icon"
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+    <aside className="hidden border-r bg-muted/40 lg:block">
+      <div className="flex h-full max-h-screen flex-col gap-2">
+        <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+          <Logo />
+        </div>
+        <div className="flex-1">
+          <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
+                  pathname === item.href && 'bg-muted text-primary'
+                )}
               >
-                <LogOut className="h-5 w-5" />
-                <span className="sr-only">Cerrar sesión</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Cerrar sesión</TooltipContent>
-          </Tooltip>
-        </nav>
-      </TooltipProvider>
+                {item.icon}
+                {item.title}
+              </Link>
+            ))}
+          </nav>
+        </div>
+      </div>
     </aside>
   );
 }
-
-    
