@@ -20,9 +20,10 @@ export async function upsertClass(formData: FormData) {
   const supabase = createAdminClient()
 
   const teacherId = formData.get('teacher_id') as string;
-  const teacherNameResult = await supabase.from('users').select('name').eq('id', teacherId).single();
-  const teacherName = teacherNameResult.data?.name || 'Desconocido';
 
+  // We no longer need to fetch the teacher's name here to store it denormalized.
+  // The join in getClassesWithTeachers will handle providing the name.
+  
   const values = {
     id: formData.get('id') as string || undefined,
     name: formData.get('name') as string,
@@ -46,26 +47,25 @@ export async function upsertClass(formData: FormData) {
 
   let result;
   
-  const payload = {
-    ...classData,
-    teacherName: teacherName,
-  };
+  // No longer need to manually add teacherName to the payload.
+  const payload = { ...classData };
 
   if (id) {
-    // Update: Don't update the image, but ensure teacherName is present.
-    result = await supabase.from('classes').update(payload).eq('id', id).select('*, teacher:users(name)').single();
+    // Update operation
+    result = await supabase.from('classes').update(payload).eq('id', id).select().single();
   } else {
-    // Insert: Include the new image
-    const insertPayload = {
+    // Insert operation
+     const insertPayload = {
       ...payload,
       image: `https://picsum.photos/600/400?random=${Date.now()}`,
     };
-    result = await supabase.from('classes').insert(insertPayload).select('*, teacher:users(name)').single();
+    result = await supabase.from('classes').insert(insertPayload).select().single();
   }
 
   const { error } = result;
 
   if (error) {
+    console.error("Error upserting class:", error);
     return {
       error: {
         message: error.message,
@@ -94,25 +94,27 @@ export async function deleteClass(classId: string) {
     return { success: true };
 }
 
-
+// This is the corrected and standardized function to get all classes with their teacher's name.
 export async function getClassesWithTeachers() {
     const supabase = createAdminClient();
+    
+    // Correct way to perform a join in Supabase
     const { data, error } = await supabase
         .from('classes')
         .select(`
             *,
-            teacher:users(name)
+            teacher:users (name)
         `);
 
     if (error) {
-        console.error("Error fetching classes:", error);
+        console.error("Error fetching classes with teachers:", error);
         return [];
     }
     
-    // Remap the data to create a flat structure with teacher_name
+    // Remap the data to create a flat structure with teacher_name for easy use in components.
     return data?.map(cls => ({
         ...cls,
+        // The joined data is in a nested object, so we extract it.
         teacher_name: (cls.teacher as any)?.name || 'Desconocido'
     })) || [];
 }
-

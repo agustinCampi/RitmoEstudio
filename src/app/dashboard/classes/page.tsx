@@ -6,7 +6,6 @@ import { redirect } from 'next/navigation';
 import { DashboardHeader } from "@/components/dashboard-header";
 import ClassManagement from "@/components/admin/class-management";
 import ClassCatalog from "@/components/student/class-catalog";
-import type { User } from '@/lib/types';
 import { getClassesWithTeachers } from '@/app/actions/class-actions';
 
 export default async function ClassesPage() {
@@ -37,7 +36,6 @@ export default async function ClassesPage() {
     .single();
 
   if (!userProfile) {
-    // This should ideally redirect to an error page
     return (
       <div className="w-full">
         <DashboardHeader title="Error" />
@@ -49,13 +47,13 @@ export default async function ClassesPage() {
   const { role } = userProfile;
   const isAdmin = role === 'admin';
 
-  // Fetch all required data on the server using server actions
+  // Fetch all required data on the server using the standardized server action
   const classesData = await getClassesWithTeachers();
+  
   const { data: teachersData, error: teachersError } = isAdmin
     ? await supabase.from('users').select('id, name').eq('role', 'teacher')
     : { data: [], error: null };
 
-  // Handle potential errors during data fetching
   if (isAdmin && teachersError) {
     return (
        <div className="w-full">

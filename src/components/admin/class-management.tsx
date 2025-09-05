@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, useEffect, useTransition } from 'react';
+import { useState, useMemo, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -15,7 +15,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
@@ -40,8 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { PlusCircle, MoreHorizontal, Trash2, Edit, Bell, Users, Clock, User as UserIcon, Search, Loader2 } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Trash2, Edit, Clock, Users, User as UserIcon, Search, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 
@@ -66,7 +64,6 @@ interface ClassManagementProps {
 
 export default function ClassManagement({ initialClasses, initialTeachers }: ClassManagementProps) {
   const { toast } = useToast();
-  // State is now initialized with server-provided props, removing the need for a loading state.
   const [classes, setClasses] = useState<Class[]>(initialClasses);
   const [teachers, setTeachers] = useState<User[]>(initialTeachers);
   const [isFormOpen, setFormOpen] = useState(false);
@@ -77,8 +74,9 @@ export default function ClassManagement({ initialClasses, initialTeachers }: Cla
 
   // This function is now used to refresh data after a mutation (create, update, delete)
   const refreshData = async () => {
+    // Always use the standardized server action to get data
     const classesData = await getClassesWithTeachers();
-    setClasses(classesData);
+    setClasses(classesData as Class[]);
   };
 
   const form = useForm<ClassFormValues>({
@@ -160,6 +158,7 @@ export default function ClassManagement({ initialClasses, initialTeachers }: Cla
   const filteredClasses = useMemo(() => {
     return classes.filter(cls => {
       const matchesLevel = selectedLevel === 'Todos' || cls.level === selectedLevel;
+      // Standardize on using `teacher_name` which comes from the server action join
       const teacherName = cls.teacher_name || '';
       const matchesSearch = searchTerm === '' ||
         cls.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -253,6 +252,7 @@ export default function ClassManagement({ initialClasses, initialTeachers }: Cla
                   <CardContent className="flex-grow space-y-3 text-sm">
                     <div className="flex items-center gap-2 text-muted-foreground">
                         <UserIcon className="h-4 w-4" />
+                        {/* Always use teacher_name, which is now reliable */}
                         <span>Prof: {cls.teacher_name}</span>
                     </div>
                     <div className="flex items-center gap-2 text-muted-foreground">
@@ -350,4 +350,3 @@ export default function ClassManagement({ initialClasses, initialTeachers }: Cla
     </div>
   );
 }
-

@@ -12,54 +12,54 @@ export type Database = {
     Tables: {
       classes: {
         Row: {
-          bookedStudents: number
-          category: string
+          booked_students: number | null
+          category: string | null
           created_at: string
           description: string
           duration: number
           id: string
           image: string
           level: Database["public"]["Enums"]["class_level"]
-          maxStudents: number
+          max_students: number
           name: string
           schedule: string
-          teacherId: string
-          teacherName: string
+          teacher_id: string
+          teacherName: string | null
         }
         Insert: {
-          bookedStudents?: number
-          category: string
+          booked_students?: number | null
+          category?: string | null
           created_at?: string
           description: string
           duration: number
           id?: string
           image: string
           level: Database["public"]["Enums"]["class_level"]
-          maxStudents?: number
+          max_students?: number
           name: string
           schedule: string
-          teacherId: string
-          teacherName: string
+          teacher_id: string
+          teacherName?: string | null
         }
         Update: {
-          bookedStudents?: number
-          category?: string
+          booked_students?: number | null
+          category?: string | null
           created_at?: string
           description?: string
           duration?: number
           id?: string
           image?: string
           level?: Database["public"]["Enums"]["class_level"]
-          maxStudents?: number
+          max_students?: number
           name?: string
           schedule?: string
-          teacherId?: string
-          teacherName?: string
+          teacher_id?: string
+          teacherName?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "classes_teacherId_fkey"
-            columns: ["teacherId"]
+            foreignKeyName: "classes_teacher_id_fkey"
+            columns: ["teacher_id"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
@@ -188,4 +188,24 @@ export type Enums<
     | { schema: keyof Database },
   EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
     ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
-    ->
+    : never = never
+> = PublicEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : PublicEnumNameOrOptions extends keyof Database["public"]["Enums"]
+  ? Database["public"]["Enums"][PublicEnumNameOrOptions]
+  : never
+
+export type Composites<
+  PublicCompositeNameOrOptions extends
+    | keyof Database["public"]["CompositeTypes"]
+    | { schema: keyof Database },
+  CompositeName extends PublicCompositeNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[PublicCompositeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never
+> = PublicCompositeNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicCompositeNameOrOptions["schema"]]["CompositeTypes"][CompositeName]
+  : PublicCompositeNameOrOptions extends keyof Database["public"]["CompositeTypes"]
+  ? Database["public"]["CompositeTypes"][PublicCompositeNameOrOptions]
+  : never

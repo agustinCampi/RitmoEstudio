@@ -23,11 +23,11 @@ export default function DashboardPage() {
   const fetchData = async () => {
     setLoading(true);
     const [classesRes, studentsRes] = await Promise.all([
-      getClassesWithTeachers(), // Use the consistent server action
+      getClassesWithTeachers(),
       supabase.from('users').select('*').eq('role', 'student')
     ]);
     
-    setClasses(classesRes);
+    setClasses(classesRes as Class[]);
     if (studentsRes.data) setStudents(studentsRes.data as User[]);
 
     setLoading(false);

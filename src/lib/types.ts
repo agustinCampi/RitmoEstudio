@@ -21,8 +21,7 @@ export interface Class {
   max_students: number;
   image: string;
   level: ClassLevel;
-  teacherName: string; // The denormalized name in the table
-  // This field is added dynamically from a join and is the one to use in the UI
+  // This field is now consistently populated by the getClassesWithTeachers action
   teacher_name?: string; 
   booked_students?: number;
   'data-ai-hint'?: string;

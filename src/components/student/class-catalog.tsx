@@ -22,20 +22,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 
 const levels: (ClassLevel | 'Todos')[] = ["Todos", "principiante", "intermedio", "avanzado"];
 
-// The component now accepts the initial data from the server-rendered page
 interface ClassCatalogProps {
   initialClasses: Class[];
 }
 
 export default function ClassCatalog({ initialClasses }: ClassCatalogProps) {
   const { toast } = useToast();
-  // The state is initialized directly with the props. No more client-side fetching or loading state needed.
   const [classes, setClasses] = useState<Class[]>(initialClasses);
   const [bookedClasses, setBookedClasses] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLevel, setSelectedLevel] = useState<ClassLevel | 'Todos'>('Todos');
-
-  // The useEffect to fetch data has been removed entirely.
 
   const handleBookClass = (classId: string, className: string) => {
     if (bookedClasses.includes(classId)) return;
@@ -51,9 +47,9 @@ export default function ClassCatalog({ initialClasses }: ClassCatalogProps) {
   };
   
   const filteredClasses = useMemo(() => {
-    // We use the `classes` state which is populated from the server props
     return classes.filter(cls => {
       const matchesLevel = selectedLevel === 'Todos' || cls.level === selectedLevel;
+      // Standardize on using `teacher_name` which comes from the server action join
       const teacherName = cls.teacher_name || '';
       const matchesSearch = searchTerm === '' || 
                             cls.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -64,7 +60,6 @@ export default function ClassCatalog({ initialClasses }: ClassCatalogProps) {
     });
   }, [searchTerm, selectedLevel, classes]);
   
-  // No more loading state needed. The data is available on initial render.
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -102,7 +97,7 @@ export default function ClassCatalog({ initialClasses }: ClassCatalogProps) {
                     <CardHeader className="p-0">
                     <div className="relative h-48 w-full">
                         <Image
-                        src={cls.image || '/placeholder.jpg'} // Add a fallback image
+                        src={cls.image || '/placeholder.jpg'}
                         alt={cls.name}
                         fill
                         className="object-cover rounded-t-lg"
@@ -115,6 +110,7 @@ export default function ClassCatalog({ initialClasses }: ClassCatalogProps) {
                           <Badge variant="outline" className="capitalize">{cls.level}</Badge>
                         </div>
                         <CardTitle className="font-bold font-headline pt-2">{cls.name}</CardTitle>
+                        {/* Always use teacher_name */}
                         <CardDescription>con {cls.teacher_name || 'Profesor no asignado'}</CardDescription>
                         <p className="text-sm pt-2">{cls.description}</p>
                     </CardContent>

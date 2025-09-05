@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import Image from "next/image";
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import { Class } from '@/lib/types';
+import type { Class } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { getClassesWithTeachers } from '@/app/actions/class-actions';
 
 import {
   Card,
@@ -27,27 +27,23 @@ export default function AssignedClasses() {
   const { toast } = useToast();
   const [assignedClasses, setAssignedClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
 
   useEffect(() => {
     const fetchAssignedClasses = async () => {
       if (!user) return;
       setLoading(true);
-      const { data, error } = await supabase
-        .from('classes')
-        .select('*')
-        .eq('teacher_id', user.id);
+      const allClassData = await getClassesWithTeachers();
       
-      if (error) {
-        toast({ title: "Error", description: "No se pudieron cargar tus clases.", variant: "destructive" });
-      } else {
-        setAssignedClasses(data as Class[]);
-      }
+      const filteredClasses = allClassData.filter(cls => cls.teacher_id === user.id);
+      
+      setAssignedClasses(filteredClasses as Class[]);
       setLoading(false);
     };
 
-    fetchAssignedClasses();
-  }, [user, toast]);
+    if (user) {
+        fetchAssignedClasses();
+    }
+  }, [user]);
 
   if (loading) {
     return (
@@ -95,14 +91,14 @@ export default function AssignedClasses() {
              </div>
              </CardHeader>
              <CardContent className="flex-grow p-6 space-y-2">
-                <Badge variant="secondary" className="w-fit">{cls.category}</Badge>
+                <Badge variant="outline" className="capitalize">{cls.level}</Badge>
                 <CardTitle className="font-bold">{cls.name}</CardTitle>
                 <CardDescription>{cls.schedule}</CardDescription>
                 <p className="text-sm text-muted-foreground pt-2">{cls.description}</p>
             </CardContent>
           <CardFooter className="flex justify-between items-center p-6">
             <div>
-              <span className="font-bold">{cls.booked_students} / {cls.max_students}</span>
+              <span className="font-bold">{cls.booked_students || 0} / {cls.max_students}</span>
               <span className="text-sm text-muted-foreground"> alumnos</span>
             </div>
             <Link href={`/dashboard/attendance/${cls.id}`} passHref>

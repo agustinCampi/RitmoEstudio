@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { Class } from '@/lib/types';
-import { createClient } from '@/lib/supabase/client';
+import { getClassesWithTeachers } from '@/app/actions/class-actions';
 
 import {
   Card,
@@ -30,32 +30,22 @@ export default function MyClasses() {
   const { toast } = useToast();
   const [myBookings, setMyBookings] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
 
   useEffect(() => {
     const fetchBookedClasses = async () => {
-      // In a real app, you would have a 'bookings' table and join it with 'classes'.
+      // In a real app, you would have a 'bookings' table and filter by user ID.
       // For now, we'll simulate this by fetching a few classes and pretending they are booked.
       setLoading(true);
-      const { data, error } = await supabase
-        .from('classes')
-        .select('*, teacher:users(name)')
-        .limit(2); 
-
-      if (error) {
-        toast({ title: "Error", description: "No se pudieron cargar tus clases reservadas.", variant: "destructive" });
-      } else {
-        const transformedData = data?.map(cls => ({
-            ...cls,
-            teacher_name: (cls.teacher as any)?.name || 'Desconocido'
-        })) || [];
-        setMyBookings(transformedData as Class[]);
-      }
+      const allClassData = await getClassesWithTeachers();
+      
+      // Simulate booking the first 2 classes
+      setMyBookings(allClassData.slice(0, 2) as Class[]);
+      
       setLoading(false);
     };
 
     fetchBookedClasses();
-  }, [toast]);
+  }, []);
 
   const handleCancelBooking = (classId: string, className: string) => {
     // This would delete a row from the 'bookings' table.
@@ -90,6 +80,7 @@ export default function MyClasses() {
             <div className="flex justify-between items-start">
                 <div>
                     <CardTitle className="font-headline font-bold">{cls.name}</CardTitle>
+                    {/* Always use teacher_name */}
                     <CardDescription>con {cls.teacher_name}</CardDescription>
                 </div>
                 <AlertDialog>
