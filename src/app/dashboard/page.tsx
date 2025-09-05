@@ -45,8 +45,8 @@ export default function DashboardPage() {
         <p className="text-muted-foreground">Aquí puedes gestionar todos los aspectos del estudio de baile.</p>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="hover:bg-muted/50 transition-colors">
-          <Link href="/dashboard/classes" className="block w-full h-full">
+        <Card className="hover:bg-muted/50 transition-colors relative">
+          <Link href="/dashboard/classes" className="absolute inset-0 z-10" aria-label="Ver clases" />
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total de Clases</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -55,10 +55,9 @@ export default function DashboardPage() {
               {loading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{classes.length}</div>}
               <p className="text-xs text-muted-foreground">Clases activas actualmente</p>
             </CardContent>
-          </Link>
         </Card>
-        <Card className="hover:bg-muted/50 transition-colors">
-          <Link href="/dashboard/students" className="block w-full h-full">
+        <Card className="hover:bg-muted/50 transition-colors relative">
+           <Link href="/dashboard/students" className="absolute inset-0 z-10" aria-label="Ver alumnos" />
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total de Alumnos</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
@@ -67,7 +66,6 @@ export default function DashboardPage() {
               {loading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{students.length}</div>}
               <p className="text-xs text-muted-foreground">Alumnos registrados en el sistema</p>
             </CardContent>
-          </Link>
         </Card>
          <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -91,8 +89,8 @@ export default function DashboardPage() {
      <div className="space-y-6">
         <p className="text-muted-foreground">Aquí puedes ver un resumen de tus clases y actividades.</p>
         <div className="grid gap-4 md:grid-cols-2">
-            <Card className="hover:bg-muted/50 transition-colors">
-              <Link href="/dashboard/assigned-classes" className="block w-full h-full">
+            <Card className="hover:bg-muted/50 transition-colors relative">
+              <Link href="/dashboard/assigned-classes" className="absolute inset-0 z-10" aria-label="Ver clases asignadas" />
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Clases Asignadas</CardTitle>
                   <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -101,10 +99,9 @@ export default function DashboardPage() {
                   {loading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{assignedClasses.length}</div>}
                   <p className="text-xs text-muted-foreground">Clases que impartes esta semana</p>
                 </CardContent>
-              </Link>
             </Card>
-            <Card className="hover:bg-muted/50 transition-colors">
-              <Link href="/dashboard/assigned-classes" className="block w-full h-full">
+            <Card className="hover:bg-muted/50 transition-colors relative">
+              <Link href="/dashboard/assigned-classes" className="absolute inset-0 z-10" aria-label="Ver próxima clase" />
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Próxima Clase</CardTitle>
                   <Users className="h-4 w-4 text-muted-foreground" />
@@ -113,7 +110,6 @@ export default function DashboardPage() {
                   {loading ? <Skeleton className="h-6 w-3/4" /> : <div className="text-xl font-bold">{assignedClasses[0]?.name || 'Ninguna'}</div>}
                   {loading ? <Skeleton className="h-4 w-1/2 mt-1" /> : <p className="text-xs text-muted-foreground">{assignedClasses[0]?.schedule || 'No hay clases próximas'}</p>}
                 </CardContent>
-              </Link>
             </Card>
         </div>
         <ClassCalendar classes={assignedClasses} loading={loading} highlightedClasses={assignedClasses} />
@@ -130,8 +126,8 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <p className="text-muted-foreground">¡Prepárate para bailar! Aquí tienes un resumen de tu actividad.</p>
          <div className="grid gap-4 md:grid-cols-2">
-            <Card className="hover:bg-muted/50 transition-colors">
-              <Link href="/dashboard/my-classes" className="block w-full h-full">
+            <Card className="hover:bg-muted/50 transition-colors relative">
+              <Link href="/dashboard/my-classes" className="absolute inset-0 z-10" aria-label="Ver mis clases"/>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Mis Clases Reservadas</CardTitle>
                   <BookUser className="h-4 w-4 text-muted-foreground" />
@@ -140,10 +136,9 @@ export default function DashboardPage() {
                   {loading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{myBookingsCount}</div>}
                   <p className="text-xs text-muted-foreground">Clases para esta semana</p>
                 </CardContent>
-              </Link>
             </Card>
-            <Card className="hover:bg-muted/50 transition-colors">
-              <Link href="/dashboard/classes" className="block w-full h-full">
+            <Card className="hover:bg-muted/50 transition-colors relative">
+              <Link href="/dashboard/classes" className="absolute inset-0 z-10" aria-label="Ver catálogo"/>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Tu Próxima Aventura</CardTitle>
                     <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -152,7 +147,6 @@ export default function DashboardPage() {
                     {loading ? <Skeleton className="h-6 w-3/4" /> : <div className="text-xl font-bold">{nextClass?.name || 'Explora el catálogo'}</div>}
                     {loading ? <Skeleton className="h-4 w-1/2 mt-1" /> : <p className="text-xs text-muted-foreground">{nextClass ? `con ${nextClass.teacher_name}` : 'Reserva una clase'}</p>}
                   </CardContent>
-              </Link>
            </Card>
         </div>
         <ClassCalendar classes={myClasses} highlightedClasses={myClasses} loading={loading} />
@@ -172,5 +166,4 @@ export default function DashboardPage() {
     </div>
   );
 }
-
     
