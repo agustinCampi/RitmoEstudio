@@ -32,9 +32,9 @@ export default function LoginPage() {
       setError("Credenciales inválidas. Por favor, inténtalo de nuevo.");
       setIsSubmitting(false);
     } else {
-      // router.refresh() will trigger the middleware to re-run
-      // and handle the redirect to the dashboard.
       router.refresh();
+      // No necesitamos establecer isSubmitting en false aquí,
+      // porque la página se recargará y el estado del componente se restablecerá.
     }
   };
 
