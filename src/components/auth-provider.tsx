@@ -1,116 +1,134 @@
 
 "use client";
 
-import React, { createContext, useState, useEffect, ReactNode, useContext } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import type { User } from '@/lib/types';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Session } from '@supabase/supabase-js';
+import { Session, User } from '@supabase/supabase-js';
 
-export interface AuthContextType {
-  user: User | null;
-  logout: () => Promise<void>;
-  loading: boolean;
+// Definir un tipo más detallado para el perfil del usuario
+interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'user';
 }
 
-export const AuthContext = createContext<AuthContextType | null>(null);
+// Definir la forma del contexto de autenticación
+interface AuthContextType {
+  user: UserProfile | null;
+  loading: boolean;
+  session: Session | null;
+}
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+// Crear el contexto de autenticación
+const AuthContext = createContext<AuthContextType>({ user: null, loading: true, session: null });
+
+// Definir las props para el AuthProvider
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+// Crear el componente proveedor de autenticación
+export const AuthProvider = ({ children }: AuthProviderProps) => {
   const supabase = createClient();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
-  const pathname = usePathname();
 
   useEffect(() => {
-    const fetchUserProfile = async (session: Session | null) => {
-      console.log("AuthProvider: fetchUserProfile iniciado.");
-      if (!session) {
+    console.log("AuthProvider: Suscribiéndose a cambios de estado de autenticación.");
+
+    const getInitialSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      console.log("AuthProvider: Sesión inicial obtenida:", data.session);
+      if (error) {
+        console.error("AuthProvider: Error al obtener la sesión inicial:", error);
+        setLoading(false);
+        return;
+      }
+
+      const currentSession = data.session;
+      setSession(currentSession);
+
+      if (currentSession?.user) {
+        await fetchUserProfile(currentSession.user);
+      } else {
         console.log("AuthProvider: No hay sesión, estableciendo user a null.");
         setUser(null);
-        setLoading(false);
-        return;
-      }
-
-      console.log("AuthProvider: Sesión activa, intentando obtener perfil para user ID:", session.user.id);
-      // *** CAMBIO CLAVE: Corregimos la consulta optimizada ***
-      // Eliminamos 'avatar_url' porque no existe en la tabla.
-      const { data: profile, error } = await supabase
-        .from('users')
-        .select('id, name, email, role') // Consulta corregida
-        .eq('id', session.user.id)
-        .single();
-      
-      if (error || !profile) {
-        console.error("AuthProvider: Error al obtener el perfil o perfil no encontrado:", error?.message);
-        await supabase.auth.signOut();
-        setUser(null);
-        router.push('/?error=profile_not_found'); 
-        setLoading(false);
-        return;
-      } else {
-        console.log("AuthProvider: Perfil de usuario cargado exitosamente.");
-        setUser(profile as User);
       }
       setLoading(false);
-      console.log("AuthProvider: fetchUserProfile finalizado.");
     };
-    
-    console.log("AuthProvider: Suscribiéndose a cambios de estado de autenticación.");
-    supabase.auth.getSession().then(({ data: { session } }) => {
-        console.log("AuthProvider: Sesión inicial obtenida:", session);
-        fetchUserProfile(session);
-    });
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+    getInitialSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       console.log("AuthProvider: Evento de authStateChange detectado:", event);
-      if (event === 'SIGNED_IN') {
-        fetchUserProfile(session);
+      setSession(currentSession);
+
+      if (event === 'SIGNED_IN' && currentSession?.user) {
+        await fetchUserProfile(currentSession.user);
       } else if (event === 'SIGNED_OUT') {
-        console.log("AuthProvider: Usuario desautenticado, redirigiendo a /.");
+        console.log("AuthProvider: Cierre de sesión, estableciendo user a null.");
         setUser(null);
-        router.push('/');
-      } else if (event === 'USER_UPDATED' && session) {
-        fetchUserProfile(session);
       }
     });
 
     return () => {
-      console.log("AuthProvider: Desuscribiendo del listener de authStateChange.");
       authListener.subscription.unsubscribe();
     };
-  }, [router]);
+  }, [supabase]);
 
-
-  const logout = async () => {
-    console.log("AuthProvider: Iniciando logout.");
+  const fetchUserProfile = async (user: User) => {
+    console.log("AuthProvider: fetchUserProfile iniciado.");
+    if (!user) {
+        console.log("AuthProvider: fetchUserProfile abortado, no hay usuario.");
+        return;
+    }
+    console.log(`AuthProvider: Sesión activa, intentando obtener perfil para user ID: ${user.id}`);
     setLoading(true);
-    await supabase.auth.signOut();
-    setUser(null);
-    router.push('/');
-    setLoading(false);
-    console.log("AuthProvider: Logout finalizado.");
+    try {
+        // **CAMBIO CLAVE: Leer desde la tabla 'users' en lugar de 'profiles'**
+        const { data: profile, error } = await supabase
+            .from('users')
+            .select('id, name, email, role')
+            .eq('id', user.id)
+            .single();
+
+        console.log("Respuesta de Supabase - error:", error);
+        if (error && error.code !== 'PGRST116') { // PGRST116: "exact-cardinality-violation", no rows found
+            throw error;
+        }
+
+        if (profile) {
+            console.log("AuthProvider: Perfil de usuario cargado exitosamente.");
+            setUser(profile as UserProfile);
+        } else {
+            console.log("AuthProvider: No se encontró perfil para el usuario.");
+            setUser(null);
+        }
+    } catch (error) {
+        console.error("AuthProvider: Error al cargar el perfil del usuario:", error);
+        setUser(null);
+    } finally {
+        console.log("AuthProvider: fetchUserProfile finalizado.");
+        setLoading(false);
+    }
   };
 
-  const value = { user, logout, loading };
-
-  const isAuthPage = pathname === '/';
-
-  if (loading && !isAuthPage) {
-    return (
-      <div className="flex items-center justify-center h-screen w-screen bg-background">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+  const value = {
+    user,
+    session,
+    loading,
+  };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
+};
 
+// Exportar el hook para usar el contexto
 export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (context === null) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };

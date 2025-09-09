@@ -1,91 +1,48 @@
 
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { NextResponse, type NextRequest } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/middleware';
+
+const protectedRoutes = ['/dashboard', '/admin'];
+const adminRoutes = ['/admin'];
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  })
+  const { supabase, response } = createClient(request);
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value,
-            ...options,
-          })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          })
-        },
-        remove(name: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value: '',
-            ...options,
-          })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
-          response.cookies.set({
-            name,
-            value: '',
-            ...options,
-          })
-        },
-      },
-    }
-  )
+  const { data: { session } } = await supabase.auth.getSession();
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  const { pathname } = request.nextUrl;
 
-  const { pathname } = request.nextUrl
-
-  // if user is logged in and tries to access login page, redirect to dashboard
   if (session && (pathname === '/' || pathname === '/login')) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  // if user is not logged in and tries to access a protected route, redirect to login page
-  if (!session && pathname.startsWith('/dashboard')) {
-     const url = request.nextUrl.clone()
-     url.pathname = '/'
-     return NextResponse.redirect(url)
+  if (!session && protectedRoutes.includes(pathname)) {
+    return NextResponse.redirect(new URL('/', request.url));
   }
 
-  return response
+  if (session && adminRoutes.includes(pathname)) {
+    // **CAMBIO CLAVE: Leer desde la tabla 'users' en lugar de 'profiles'**
+    const { data: user, error } = await supabase
+      .from('users') 
+      .select('role')
+      .eq('id', session.user.id)
+      .single();
+
+    if (error || !user || user.role !== 'admin') {
+      console.log('Middleware: Acceso de no-administrador denegado. Redirigiendo...');
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+    console.log('Middleware: Acceso de administrador verificado.');
+  }
+
+  return response;
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - /auth (auth routes)
-     * - /api (api routes)
-     */
-    '/((?!_next/static|_next/image|favicon.ico|auth|api).*)',
+    '/',
+    '/login',
+    '/dashboard',
+    '/admin',
   ],
-}
+};
