@@ -59,14 +59,17 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getSession()
 
   const { pathname } = request.nextUrl
+  const isPublicRoute = pathname === '/'
 
-  if (!session && !pathname.startsWith('/auth') && pathname !== '/') {
+  // if user is not logged in and is trying to access a protected route
+  if (!session && !isPublicRoute) {
      const url = request.nextUrl.clone()
      url.pathname = '/'
      return NextResponse.redirect(url)
   }
   
-  if (session && pathname === '/') {
+  // if user is logged in and is trying to access the login page
+  if (session && isPublicRoute) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
@@ -82,7 +85,8 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - /auth (auth routes)
+     * - /_axiom (axiom logs)
      */
-    '/((?!_next/static|_next/image|favicon.ico|auth).*)',
+    '/((?!_next/static|_next/image|favicon.ico|auth|_axiom).*)',
   ],
 }
