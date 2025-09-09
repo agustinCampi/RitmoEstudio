@@ -61,12 +61,12 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  // if user is logged in and is trying to access the login page
-  if (session && pathname === '/') {
+  // if user is logged in and tries to access login page, redirect to dashboard
+  if (session && (pathname === '/' || pathname === '/login')) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  // if user is not logged in and is trying to access a protected route
+  // if user is not logged in and tries to access a protected route, redirect to login page
   if (!session && pathname.startsWith('/dashboard')) {
      const url = request.nextUrl.clone()
      url.pathname = '/'
@@ -84,8 +84,8 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - /auth (auth routes)
-     * - /_axiom (axiom logs)
+     * - /api (api routes)
      */
-    '/((?!_next/static|_next/image|favicon.ico|auth|_axiom|api).*)',
+    '/((?!_next/static|_next/image|favicon.ico|auth|api).*)',
   ],
 }

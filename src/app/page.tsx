@@ -48,6 +48,7 @@ export default function LoginPage() {
       email: data.email,
       password: data.password,
     });
+
     if (error) {
       toast({
         title: "Error al iniciar sesión",
@@ -55,8 +56,9 @@ export default function LoginPage() {
         variant: "destructive",
       });
     } else {
-      router.push('/dashboard');
-      router.refresh();
+      // The AuthProvider will detect the session change and handle the redirect
+      // to the dashboard via the middleware. No manual push is needed here.
+      // This prevents race conditions and rendering issues.
     }
   };
 
