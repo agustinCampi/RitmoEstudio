@@ -1,7 +1,7 @@
 
 "use client";
 
-import { DashboardHeader } from "@/components/dashboard-header";
+import DashboardHeader from "@/components/dashboard-header";
 import { ClassCalendar } from "@/components/dashboard/class-calendar";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState } from "react";

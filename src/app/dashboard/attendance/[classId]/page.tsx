@@ -2,7 +2,7 @@
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
-import { DashboardHeader } from "@/components/dashboard-header";
+import DashboardHeader from "@/components/dashboard-header";
 import AttendanceTracker from "@/components/teacher/attendance-tracker";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";

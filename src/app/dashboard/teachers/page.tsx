@@ -5,7 +5,7 @@ import { TeacherManagement } from "@/components/admin/teacher-management";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { DashboardHeader } from "@/components/dashboard-header";
+import DashboardHeader from "@/components/dashboard-header";
 
 
 export default function TeachersPage() {

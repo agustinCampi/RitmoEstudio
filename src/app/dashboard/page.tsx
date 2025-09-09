@@ -11,7 +11,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Class, User } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getClassesWithTeachers } from "../actions/class-actions";
-import { DashboardHeader } from "@/components/dashboard-header";
+import DashboardHeader from "@/components/dashboard-header";
 
 export default function DashboardPage() {
   const { user } = useAuth();

@@ -2,7 +2,7 @@
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
-import { DashboardHeader } from "@/components/dashboard-header";
+import DashboardHeader from "@/components/dashboard-header";
 import AssignedClasses from "@/components/teacher/assigned-classes";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";

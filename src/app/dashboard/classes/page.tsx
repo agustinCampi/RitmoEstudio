@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import { redirect } from 'next/navigation';
 
-import { DashboardHeader } from "@/components/dashboard-header";
+import DashboardHeader from "@/components/dashboard-header";
 import ClassManagement from "@/components/admin/class-management";
 import ClassCatalog from "@/components/student/class-catalog";
 import { getClassesWithTeachers } from '@/app/actions/class-actions';
