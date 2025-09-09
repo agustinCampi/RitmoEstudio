@@ -4,7 +4,13 @@ import { redirect } from 'next/navigation';
 import ClassCalendar from '@/components/dashboard/class-calendar';
 import { type EventSourceInput } from '@fullcalendar/core';
 import { type DanceClass } from '@/lib/types';
-import { checkRole } from '@/lib/utils';
+
+async function checkRole(role: string) {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+  return user?.role === role;
+}
 
 // Mapa para convertir nombres de días en español a números (0=Domingo, 1=Lunes, etc.)
 const dayOfWeekMap: { [key: string]: number } = {

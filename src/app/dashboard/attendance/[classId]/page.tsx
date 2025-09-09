@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
-import { checkRole } from '@/lib/utils';
 import { type User } from '@/lib/types';
 // Asumiremos que este componente será adaptado para recibir las props correctas
 import AttendanceTracker from '@/components/teacher/attendance-tracker'; 

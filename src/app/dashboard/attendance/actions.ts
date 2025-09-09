@@ -1,7 +1,6 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { checkRole } from '@/lib/utils';
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 

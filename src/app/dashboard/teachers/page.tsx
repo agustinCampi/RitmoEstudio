@@ -2,7 +2,13 @@ import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import TeachersTable from '@/components/teachers-table';
-import { checkRole } from '@/lib/utils';
+
+async function checkRole(role: string) {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+  return user?.role === role;
+}
 
 export default async function TeachersPage() {
   // Proteger la ruta en el servidor

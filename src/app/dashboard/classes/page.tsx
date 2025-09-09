@@ -6,7 +6,13 @@ import Link from 'next/link';
 import { PlusCircle } from 'lucide-react';
 import ClassesTable from '@/components/classes-table';
 import { type DanceClass } from '@/lib/types'; // Importación centralizada
-import { checkRole } from '@/lib/utils';
+
+async function checkRole(role: string) {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+  return user?.role === role;
+}
 
 export default async function ClassesPage() {
   // Protección de ruta robusta
