@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -20,6 +21,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/logo';
+import { Loader2 } from 'lucide-react';
 
 
 const loginSchema = z.object({
@@ -42,6 +44,8 @@ export default function LoginPage() {
     },
   });
 
+  const { formState } = form;
+
   const onSubmit = async (data: LoginFormValues) => {
     const { error } = await supabase.auth.signInWithPassword({
       email: data.email,
@@ -51,7 +55,7 @@ export default function LoginPage() {
     if (error) {
       toast({
         title: "Error al iniciar sesión",
-        description: error.message,
+        description: error.message || "Las credenciales no son correctas.",
         variant: "destructive",
       });
     } else {
@@ -79,8 +83,8 @@ export default function LoginPage() {
                 placeholder="tu@email.com"
                 {...form.register('email')}
               />
-              {form.formState.errors.email && (
-                <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
+              {formState.errors.email && (
+                <p className="text-sm text-destructive">{formState.errors.email.message}</p>
               )}
             </div>
             <div className="space-y-2">
@@ -94,13 +98,14 @@ export default function LoginPage() {
                   </Link>
               </div>
               <Input id="password" type="password" {...form.register('password')} />
-              {form.formState.errors.password && (
-                <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
+              {formState.errors.password && (
+                <p className="text-sm text-destructive">{formState.errors.password.message}</p>
               )}
             </div>
             
-            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-              Iniciar Sesión
+            <Button type="submit" className="w-full" disabled={formState.isSubmitting}>
+              {formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {formState.isSubmitting ? 'Iniciando sesión...' : 'Iniciar Sesión'}
             </Button>
           </form>
         </CardContent>
