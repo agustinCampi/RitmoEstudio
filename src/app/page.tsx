@@ -59,6 +59,7 @@ export default function LoginPage() {
       // The AuthProvider will detect the session change and handle the redirect
       // to the dashboard via the middleware. No manual push is needed here.
       // This prevents race conditions and rendering issues.
+       router.refresh();
     }
   };
 
