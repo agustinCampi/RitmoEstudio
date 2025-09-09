@@ -35,26 +35,24 @@ export default function DashboardHeader({ title }: { title?: string }) {
   const currentNavItems = getNavItems();
 
   return (
-    <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6 sticky top-0 bg-background z-30 lg:hidden">
+    <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6 sticky top-0 bg-background z-30">
        <Sheet>
         <SheetTrigger asChild>
           <Button
             variant="outline"
             size="icon"
-            className="shrink-0"
+            className="shrink-0 lg:hidden"
           >
             <Menu className="h-5 w-5" />
             <span className="sr-only">Toggle navigation menu</span>
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="flex flex-col p-0">
-            <SheetHeader className="p-6 pb-2 sr-only">
-                <SheetTitle>Menú de Navegación</SheetTitle>
+            <SheetHeader className="p-6 pb-2">
+                <SheetTitle>RitmoEstudio</SheetTitle>
             </SheetHeader>
             <nav className="grid gap-2 text-lg font-medium p-6">
-            <div className="flex h-14 items-center mb-4">
-                <Logo />
-            </div>
+            
             {currentNavItems.map((item) => (
               <SheetClose asChild key={item.href}>
                 <Link

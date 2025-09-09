@@ -55,7 +55,7 @@ export default function DashboardSidebar() {
         </div>
       </aside>
       <div className='lg:hidden'>
-        <DashboardHeader title='RitmoEstudio' />
+        <DashboardHeader />
       </div>
     </>
   );
