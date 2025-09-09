@@ -10,10 +10,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Trash, Edit, UserPlus } from 'lucide-react';
+import { Trash, Edit, UserPlus, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { deleteClass } from '@/app/dashboard/classes/actions';
 import { useToast } from './ui/use-toast';
+import { useState, useTransition } from 'react';
 
 type ClassesTableProps = {
   classes: DanceClass[];
@@ -22,6 +23,8 @@ type ClassesTableProps = {
 export default function ClassesTable({ classes }: ClassesTableProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const handleEdit = (id: string) => {
     router.push(`/dashboard/classes/${id}/edit`);
@@ -33,21 +36,24 @@ export default function ClassesTable({ classes }: ClassesTableProps) {
 
   const handleDelete = async (id: string) => {
     if (confirm('¿Estás seguro de que quieres eliminar esta clase?')) {
-      const result = await deleteClass(id);
-      if (result?.message) {
-        toast({
-          title: 'Error', // Corregido: Título de error
-          description: result.message,
-          variant: 'destructive', // Corregido: Variante destructiva para errores
-        });
-      } else {
-        toast({
-          title: 'Éxito',
-          description: 'Clase eliminada correctamente.',
-        });
-        // Refrescar para actualizar la lista de clases
-        router.refresh(); 
-      }
+      setIsDeleting(id);
+      startTransition(async () => {
+        const result = await deleteClass(id);
+        if (!result.success) {
+          toast({
+            title: 'Error',
+            description: result.message || 'No se pudo eliminar la clase.',
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'Éxito',
+            description: 'Clase eliminada correctamente.',
+          });
+          // No es necesario router.refresh() porque la server action usa revalidatePath
+        }
+        setIsDeleting(null);
+      });
     }
   };
 
@@ -75,14 +81,18 @@ export default function ClassesTable({ classes }: ClassesTableProps) {
                 )}
               </TableCell>
               <TableCell className="text-right">
-                <Button variant="ghost" size="icon" onClick={() => handleEnroll(danceClass.id)}>
+                <Button variant="ghost" size="icon" onClick={() => handleEnroll(danceClass.id)} disabled={isPending}>
                   <UserPlus className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => handleEdit(danceClass.id)}>
+                <Button variant="ghost" size="icon" onClick={() => handleEdit(danceClass.id)} disabled={isPending}>
                   <Edit className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => handleDelete(danceClass.id)}>
-                  <Trash className="h-4 w-4" />
+                <Button variant="ghost" size="icon" onClick={() => handleDelete(danceClass.id)} disabled={isPending || isDeleting === danceClass.id}>
+                  {isDeleting === danceClass.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash className="h-4 w-4" />
+                  )}
                 </Button>
               </TableCell>
             </TableRow>

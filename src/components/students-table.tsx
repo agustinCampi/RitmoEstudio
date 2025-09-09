@@ -10,10 +10,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Trash, Edit } from 'lucide-react';
+import { Trash, Edit, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { deleteStudent } from '@/app/dashboard/students/actions';
 import { useToast } from './ui/use-toast';
+import { useState, useTransition } from 'react';
 
 type StudentsTableProps = {
   students: User[];
@@ -22,6 +23,8 @@ type StudentsTableProps = {
 export default function StudentsTable({ students }: StudentsTableProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const handleEdit = (id: string) => {
     router.push(`/dashboard/students/${id}/edit`);
@@ -29,19 +32,23 @@ export default function StudentsTable({ students }: StudentsTableProps) {
 
   const handleDelete = async (id: string) => {
     if (confirm('¿Estás seguro de que quieres eliminar este alumno?')) {
-      const result = await deleteStudent(id);
-      if (result?.message) {
-        toast({
-          title: 'Error',
-          description: result.message,
-          variant: 'destructive',
-        });
-      } else {
-        toast({
-          title: 'Éxito',
-          description: 'Alumno eliminado correctamente.',
-        });
-      }
+      setIsDeleting(id);
+      startTransition(async () => {
+        const result = await deleteStudent(id);
+        if (!result.success) {
+          toast({
+            title: 'Error',
+            description: result.message || 'No se pudo eliminar al alumno.',
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'Éxito',
+            description: 'Alumno eliminado correctamente.',
+          });
+        }
+        setIsDeleting(null);
+      });
     }
   };
 
@@ -61,11 +68,15 @@ export default function StudentsTable({ students }: StudentsTableProps) {
               <TableCell className="font-medium">{student.name}</TableCell>
               <TableCell>{student.email}</TableCell>
               <TableCell className="text-right">
-                <Button variant="ghost" size="icon" onClick={() => handleEdit(student.id)}>
+                <Button variant="ghost" size="icon" onClick={() => handleEdit(student.id)} disabled={isPending}>
                   <Edit className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => handleDelete(student.id)}>
-                  <Trash className="h-4 w-4" />
+                <Button variant="ghost" size="icon" onClick={() => handleDelete(student.id)} disabled={isPending || isDeleting === student.id}>
+                  {isDeleting === student.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash className="h-4 w-4" />
+                  )}
                 </Button>
               </TableCell>
             </TableRow>

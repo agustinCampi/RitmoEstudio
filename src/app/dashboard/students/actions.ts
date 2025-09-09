@@ -1,13 +1,23 @@
 'use server';
 
-// Importamos el cliente de admin que tiene los superpoderes necesarios.
+import { createClient } from '@/lib/supabase/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
-// Unificamos los esquemas de Zod. 
-// El ID es opcional (para la creación) y la contraseña también (para la actualización).
+// Helper de autorización para asegurar que solo los administradores puedan ejecutar estas acciones.
+async function ensureAdmin() {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || user.role !== 'admin') {
+    throw new Error('Acción no autorizada. Se requiere rol de administrador.');
+  }
+  return user;
+}
+
 const StudentSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(3, 'El nombre debe tener al menos 3 caracteres.'),
@@ -15,12 +25,13 @@ const StudentSchema = z.object({
   password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres.').optional().or(z.literal('')),
 });
 
-/**
- * Acción para CREAR un nuevo alumno.
- * Utiliza el cliente de admin para crear un usuario en el sistema de autenticación y
- * luego inserta su perfil en la tabla `users`.
- */
 export async function createStudent(prevState: any, formData: FormData) {
+  try {
+    await ensureAdmin();
+  } catch (error: any) {
+    return { message: error.message };
+  }
+
   const validatedFields = StudentSchema.safeParse(Object.fromEntries(formData.entries()));
 
   if (!validatedFields.success) {
@@ -29,27 +40,25 @@ export async function createStudent(prevState: any, formData: FormData) {
 
   const { name, email, password } = validatedFields.data;
 
-  // ¡La contraseña es obligatoria para usuarios nuevos!
   if (!password) {
     return { errors: { password: ['La contraseña es obligatoria'] }, message: 'Error de validación.' };
   }
 
-  // 1. Crear el usuario en el sistema de autenticación de Supabase.
+  // 1. Crear el usuario en Supabase Auth
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email,
     password,
-    email_confirm: true, // Lo marcamos como confirmado para que el usuario pueda iniciar sesión directamente.
-    user_metadata: { name, role: 'student' },
+    email_confirm: true,
+    user_metadata: { full_name: name, role: 'student' },
   });
 
   if (authError) {
-    return { message: `Error creando el usuario de autenticación: ${authError.message}` };
+    return { message: `Error creando el usuario: ${authError.message}` };
   }
 
   const userId = authData.user.id;
 
-  // 2. Insertar el perfil del usuario en nuestra tabla `public.users`.
-  // Esto nos da más control y evita depender de triggers de base de datos.
+  // 2. Insertar el perfil en la tabla public.users (LÓGICA CRÍTICA RESTAURADA)
   const { error: profileError } = await supabaseAdmin.from('users').insert({
     id: userId,
     name,
@@ -58,7 +67,7 @@ export async function createStudent(prevState: any, formData: FormData) {
   });
 
   if (profileError) {
-    // Si la inserción del perfil falla, debemos intentar eliminar al usuario de auth para evitar datos huérfanos.
+    // Rollback: si falla la inserción del perfil, eliminar el usuario de auth
     await supabaseAdmin.auth.admin.deleteUser(userId);
     return { message: `Error creando el perfil de usuario: ${profileError.message}` };
   }
@@ -67,12 +76,13 @@ export async function createStudent(prevState: any, formData: FormData) {
   redirect('/dashboard/students');
 }
 
-/**
- * Acción para ACTUALIZAR un alumno existente.
- * Utiliza el cliente de admin para actualizar los datos de autenticación (email, contraseña)
- * y los datos del perfil en la tabla `users`.
- */
 export async function updateStudent(prevState: any, formData: FormData) {
+  try {
+    await ensureAdmin();
+  } catch (error: any) {
+    return { message: error.message };
+  }
+
   const validatedFields = StudentSchema.safeParse(Object.fromEntries(formData.entries()));
 
   if (!validatedFields.success) {
@@ -82,21 +92,21 @@ export async function updateStudent(prevState: any, formData: FormData) {
   const { id, name, email, password } = validatedFields.data;
 
   if (!id) {
-    return { message: 'El ID del alumno es requerido para actualizar.' };
+    return { message: 'El ID del alumno es requerido.' };
   }
 
-  // 1. Actualizar los datos de autenticación del usuario.
+  // 1. Actualizar datos en Supabase Auth
   const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(id, {
     email,
-    password: password || undefined, // Si la contraseña está vacía, no la actualizamos.
-    user_metadata: { name },
+    password: password || undefined,
+    user_metadata: { full_name: name },
   });
 
   if (authError) {
-    return { message: `Error actualizando la autenticación del usuario: ${authError.message}` };
+    return { message: `Error actualizando el usuario: ${authError.message}` };
   }
 
-  // 2. Actualizar el perfil en la tabla `public.users` para mantener la consistencia.
+  // 2. Actualizar el perfil en public.users para mantener consistencia (LÓGICA CRÍTICA RESTAURADA)
   const { error: profileError } = await supabaseAdmin.from('users').update({ name, email }).eq('id', id);
 
   if (profileError) {
@@ -107,23 +117,40 @@ export async function updateStudent(prevState: any, formData: FormData) {
   redirect('/dashboard/students');
 }
 
-/**
- * Acción para ELIMINAR un alumno.
- * Utiliza el cliente de admin para eliminar al usuario del sistema de autenticación.
- * La tabla `users` debería actualizarse automáticamente gracias al `ON DELETE CASCADE`.
- */
-export async function deleteStudent(id: string) {
+export async function deleteStudent(id: string): Promise<{ success: boolean; message?: string }> {
+  try {
+    await ensureAdmin();
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+
+  // 1. Verificar si el alumno tiene inscripciones en clases (Protección Cascada)
+  const { data: enrollments, error: checkError } = await supabase
+    .from('class_enrollments')
+    .select('id')
+    .eq('student_id', id)
+    .limit(1);
+
+  if (checkError) {
+    console.error('Error checking for enrollments:', checkError);
+    return { success: false, message: 'Error al verificar las inscripciones del alumno.' };
+  }
+
+  if (enrollments && enrollments.length > 0) {
+    return { success: false, message: 'Este alumno no puede ser eliminado porque está inscrito en clases.' };
+  }
+
+  // 2. Eliminar el usuario de Supabase Auth (la tabla public.users se actualiza por CASCADE)
   const { error } = await supabaseAdmin.auth.admin.deleteUser(id);
 
   if (error) {
     console.error('Error eliminando alumno:', error);
-    // Devolvemos un mensaje para que el cliente pueda mostrar una notificación de error.
-    return { message: `Error eliminando alumno: ${error.message}` };
+    return { success: false, message: `Error eliminando alumno: ${error.message}` };
   }
 
   revalidatePath('/dashboard/students');
-  
-  // En caso de éxito, NO devolvemos nada. 
-  // El componente cliente interpretará una respuesta `undefined` como éxito y refrescará la UI.
-  return;
+  return { success: true };
 }

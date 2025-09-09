@@ -4,8 +4,18 @@ import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
-import { sendClassUpdateNotification, sendClassCancellationNotification } from '@/lib/notifications';
-import { type DanceClass } from '@/lib/types';
+import { sendClassUpdateNotification } from '@/lib/notifications';
+
+// Helper de autorización para asegurar que solo los administradores puedan ejecutar estas acciones.
+async function ensureAdmin() {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || user.role !== 'admin') {
+    throw new Error('Acción no autorizada. Se requiere rol de administrador.');
+  }
+  return user;
+}
 
 const FormSchema = z.object({
   id: z.string().optional(),
@@ -33,13 +43,12 @@ async function getEnrolledStudentsEmails(supabase: any, classId: string): Promis
 }
 
 export async function createClass(prevState: any, formData: FormData) {
-  const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+  try {
+    await ensureAdmin();
+  } catch (error: any) {
+    return { message: error.message };
+  }
   
-  // Auth check
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user || user.role !== 'admin') return { message: 'Acción no autorizada.' };
-
   const validatedFields = CreateClass.safeParse({
     name: formData.get('name'),
     description: formData.get('description'),
@@ -51,6 +60,8 @@ export async function createClass(prevState: any, formData: FormData) {
     return { errors: validatedFields.error.flatten().fieldErrors };
   }
 
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
   const { error } = await supabase.from('classes').insert(validatedFields.data);
 
   if (error) {
@@ -65,9 +76,11 @@ export async function updateClass(prevState: any, formData: FormData) {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
   
-  // Auth check
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user || user.role !== 'admin') return { message: 'Acción no autorizada.' };
+  try {
+    await ensureAdmin();
+  } catch (error: any) {
+    return { message: error.message };
+  }
 
   const validatedFields = UpdateClass.safeParse({
     id: formData.get('id'),
@@ -89,7 +102,6 @@ export async function updateClass(prevState: any, formData: FormData) {
     return { message: 'Error al actualizar la clase.' };
   }
 
-  // Enviar notificación después de una actualización exitosa
   const studentEmails = await getEnrolledStudentsEmails(supabase, id!);
   if (studentEmails.length > 0) {
     const { data: teacher } = await supabase.from('users').select('name').eq('id', classData.teacher_id).single();
@@ -109,55 +121,49 @@ export async function updateClass(prevState: any, formData: FormData) {
 }
 
 export async function deleteClass(id: string) {
+  try {
+    await ensureAdmin();
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
-  
-  // Auth check
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user || user.role !== 'admin') {
-    return { success: false, message: 'Acción no autorizada.' };
+
+  const { data: enrollments, error: enrollmentsError } = await supabase
+    .from('class_enrollments')
+    .select('id')
+    .eq('class_id', id)
+    .limit(1);
+
+  if (enrollmentsError) {
+    console.error('Error checking enrollments:', enrollmentsError);
+    return { success: false, message: 'Error al verificar las inscripciones.' };
   }
 
-  // 1. Obtener los detalles de la clase y los correos de los alumnos ANTES de borrar
-  const { data: classToDelete } = await supabase.from('classes').select('name').eq('id', id).single();
-  if (!classToDelete) {
-    return { success: false, message: 'La clase no existe.' };
+  if (enrollments && enrollments.length > 0) {
+    return { success: false, message: 'Esta clase no puede ser eliminada porque tiene estudiantes inscritos.' };
   }
-  const studentEmails = await getEnrolledStudentsEmails(supabase, id);
 
-  // 2. Eliminar la clase
   const { error } = await supabase.from('classes').delete().eq('id', id);
 
   if (error) {
     return { success: false, message: 'Error al eliminar la clase.' };
   }
 
-  // 3. Enviar notificación de cancelación si había alumnos inscritos
-  if (studentEmails.length > 0) {
-    await sendClassCancellationNotification({
-      className: classToDelete.name,
-      message: `Lamentamos informarte que la clase "${classToDelete.name}" ha sido cancelada.`,
-      studentEmails: studentEmails,
-    });
-  }
-
   revalidatePath('/dashboard/classes');
   return { success: true };
 }
 
-
-// enroll actions
-
 export async function enrollStudent(classId: string, studentId: string) {
-  const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
-  
-  // Auth check
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user || user.role !== 'admin') {
-    return { success: false, message: 'Acción no autorizada.' };
+  try {
+    await ensureAdmin();
+  } catch (error: any) {
+    return { success: false, message: error.message };
   }
 
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
   const { error } = await supabase.from('class_enrollments').insert({ class_id: classId, user_id: studentId });
 
   if (error) {
@@ -168,15 +174,14 @@ export async function enrollStudent(classId: string, studentId: string) {
 }
 
 export async function unenrollStudent(classId: string, studentId: string) {
-  const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
-  
-  // Auth check
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user || user.role !== 'admin') {
-    return { success: false, message: 'Acción no autorizada.' };
+  try {
+    await ensureAdmin();
+  } catch (error: any) {
+    return { success: false, message: error.message };
   }
 
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
   const { error } = await supabase.from('class_enrollments').delete().match({ class_id: classId, user_id: studentId });
 
   if (error) {
