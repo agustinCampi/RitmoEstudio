@@ -20,19 +20,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const pathname = usePathname();
 
   useEffect(() => {
-    const fetchSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        await fetchUserProfile(session);
-      } else {
+    const fetchUserProfile = async (session: Session | null) => {
+      if (!session) {
+        setUser(null);
         setLoading(false);
+        return;
       }
-    };
 
-    const fetchUserProfile = async (session: Session) => {
       const { data: profile, error } = await supabase
         .from('users')
         .select('*')
@@ -41,6 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (error || !profile) {
         console.error("Error fetching user profile or profile not found:", error?.message);
+        // If profile is missing, might be a partial signup, log them out client-side
         await supabase.auth.signOut();
         setUser(null);
       } else {
@@ -48,34 +45,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setLoading(false);
     };
-
-    fetchSession();
+    
+    // Fetch initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+        fetchUserProfile(session);
+    });
 
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
+      if (event === 'SIGNED_IN') {
         fetchUserProfile(session);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         router.push('/');
+      } else if (event === 'USER_UPDATED' && session) {
+        fetchUserProfile(session);
       }
     });
 
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, []);
+  }, [router, supabase]);
 
-  useEffect(() => {
-    if (!loading) {
-      const isAuthPage = pathname === '/' || pathname === '/signup' || pathname === '/setup';
-      if (!user && !isAuthPage) {
-        router.push('/');
-      }
-      if (user && isAuthPage) {
-        router.push('/dashboard');
-      }
-    }
-  }, [user, loading, pathname, router]);
 
   const logout = async () => {
     setLoading(true);
@@ -87,7 +78,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = { user, logout, loading };
 
-  if (loading && (pathname !== '/setup')) {
+  // Don't show loading spinner for auth pages to prevent flashing
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-screen w-screen bg-background">
         <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
