@@ -17,8 +17,6 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { adminNav, teacherNav, studentNav } from "@/config/nav-config";
 import { Logo } from "./logo";
-import { useState } from "react";
-
 
 export default function DashboardHeader() {
   const pathname = usePathname();
@@ -35,21 +33,21 @@ export default function DashboardHeader() {
 
   const navItems = getNavItems();
 
-  const pageTitles: { [key: string]: string } = {
-    '/dashboard': `¡Hola, ${user?.name.split(' ')[0]}!`,
-    '/dashboard/classes': 'Clases',
-    '/dashboard/students': 'Gestionar Alumnos',
-    '/dashboard/teachers': 'Gestionar Profesores',
-    '/dashboard/assigned-classes': 'Mis Clases Asignadas',
-    '/dashboard/my-classes': 'Mis Clases Reservadas',
-    '/dashboard/calendar': 'Calendario de Clases',
-  };
-
   const getTitle = () => {
+    // Find the nav item that matches the current path
+    for (const item of navItems) {
+        if (pathname === item.href) {
+            return item.title;
+        }
+    }
+    // Handle nested routes like attendance
     if (pathname.startsWith('/dashboard/attendance/')) {
         return 'Tomar Asistencia';
     }
-    return pageTitles[pathname] || 'RitmoEstudio';
+    if (pathname === '/dashboard') {
+        return `¡Hola, ${user?.name.split(' ')[0]}!`;
+    }
+    return 'RitmoEstudio';
   }
 
 
