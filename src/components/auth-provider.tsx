@@ -10,7 +10,7 @@ interface UserProfile {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'user';
+  role: 'admin' | 'teacher' | 'student';
 }
 
 // Definir la forma del contexto de autenticación
@@ -87,7 +87,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     console.log(`AuthProvider: Sesión activa, intentando obtener perfil para user ID: ${user.id}`);
     setLoading(true);
     try {
-        // **CAMBIO CLAVE: Leer desde la tabla 'users' en lugar de 'profiles'**
         const { data: profile, error } = await supabase
             .from('users')
             .select('id, name, email, role')
