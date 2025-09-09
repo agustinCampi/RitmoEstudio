@@ -3,19 +3,12 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import type { Session, User } from '@supabase/supabase-js';
-
-// Definir un tipo más detallado para el perfil del usuario, que coincida con la DB
-interface UserProfile {
-  id: string;
-  name: string;
-  email: string;
-  role: 'admin' | 'teacher' | 'student';
-}
+import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
+import { User as AppUser, UserRole } from '@/lib/types';
 
 // Definir la forma del contexto de autenticación
 interface AuthContextType {
-  user: UserProfile | null;
+  user: AppUser | null;
   loading: boolean;
   session: Session | null;
 }
@@ -32,66 +25,53 @@ interface AuthProviderProps {
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const supabase = createClient();
   const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Iniciar con la sesión actual, si existe
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const fetchUserProfile = async (authUser: SupabaseUser) => {
+        const { data: profile, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', authUser.id)
+            .single();
+
+        if (error) {
+            console.error("Error fetching user profile:", error);
+            setUser(null);
+        } else {
+            setUser(profile as AppUser);
+        }
+        setLoading(false);
+    };
+    
+    // Iniciar con la sesión actual
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       if (session?.user) {
-        fetchUserProfile(session.user);
+        await fetchUserProfile(session.user);
       } else {
         setLoading(false);
       }
     });
 
     // Escuchar cambios en el estado de autenticación
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
-        setSession(currentSession);
-        if (currentSession?.user) {
-            // Si hay una sesión, siempre intentar obtener el perfil
-            await fetchUserProfile(currentSession.user);
-        } else {
-            // Si no hay sesión, limpiar el usuario
-            setUser(null);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setSession(session);
+        if (event === 'SIGNED_IN' && session?.user) {
+          await fetchUserProfile(session.user);
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
         }
-        // La carga solo finaliza después de procesar el evento
-        setLoading(false);
       }
     );
 
     return () => {
-      authListener.subscription.unsubscribe();
+      subscription.unsubscribe();
     };
-  }, []);
+  }, [supabase]);
 
-  const fetchUserProfile = async (authUser: User) => {
-    try {
-      const { data: profile, error } = await supabase
-        .from('users')
-        .select('id, name, email, role')
-        .eq('id', authUser.id)
-        .single();
-      
-      if (error) {
-          // Si el error es que no se encuentra la fila, es normal en un flujo de registro
-          if (error.code !== 'PGRST116') {
-             throw error;
-          }
-          setUser(null);
-      } else {
-          setUser(profile as UserProfile);
-      }
-    } catch (error) {
-      console.error("Error al cargar el perfil del usuario:", error);
-      setUser(null);
-    } finally {
-        // Asegurarse de que el estado de carga termine aquí
-        setLoading(false);
-    }
-  };
   
   const value = {
     user,
@@ -99,7 +79,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     loading,
   };
 
-  // No renderizar nada hasta que se haya determinado el estado de autenticación
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 

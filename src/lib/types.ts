@@ -23,7 +23,6 @@ export interface Class {
   level: ClassLevel;
   teacher_name?: string; 
   booked_students?: number;
-  'data-ai-hint'?: string;
 }
 
 export interface Booking {
@@ -39,9 +38,4 @@ export interface Attendance {
   student_id: string;
   date: Date;
   status: 'presente' | 'ausente';
-}
-
-export interface StudentProfile extends User {
-  joined_date: Date;
-  booked_classes: number;
 }

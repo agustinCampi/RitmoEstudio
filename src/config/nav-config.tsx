@@ -1,22 +1,28 @@
 
-import { LayoutGrid, Calendar, Users, Book, ClipboardCheck } from 'lucide-react';
+import React from 'react';
+import { LayoutGrid, Calendar, Users, Book, ClipboardCheck, User as UserIcon } from 'lucide-react';
 
-export const adminNav = [
-  { title: 'Dashboard', href: '/dashboard', icon: <LayoutGrid className="h-4 w-4" /> },
-  { title: 'Clases', href: '/dashboard/classes', icon: <Calendar className="h-4 w-4" /> },
-  { title: 'Alumnos', href: '/dashboard/students', icon: <Users className="h-4 w-4" /> },
-  { title: 'Profesores', href: '/dashboard/teachers', icon: <Users className="h-4 w-4" /> },
+interface NavItem {
+    label: string;
+    href: string;
+    icon: React.ReactElement;
+}
+
+export const adminNav: NavItem[] = [
+  { label: 'Dashboard', href: '/dashboard', icon: <LayoutGrid /> },
+  { label: 'Clases', href: '/dashboard/classes', icon: <Calendar /> },
+  { label: 'Alumnos', href: '/dashboard/students', icon: <Users /> },
+  { label: 'Profesores', href: '/dashboard/teachers', icon: <UserIcon /> },
 ];
 
-export const teacherNav = [
-  { title: 'Dashboard', href: '/dashboard', icon: <LayoutGrid className="h-4 w-4" /> },
-  { title: 'Clases Asignadas', href: '/dashboard/assigned-classes', icon: <ClipboardCheck className="h-4 w-4" /> },
+export const teacherNav: NavItem[] = [
+  { label: 'Dashboard', href: '/dashboard', icon: <LayoutGrid /> },
+  { label: 'Clases Asignadas', href: '/dashboard/assigned-classes', icon: <ClipboardCheck /> },
+  { label: 'Mi Calendario', href: '/dashboard/calendar', icon: <Calendar /> },
 ];
 
-export const studentNav = [
-  { title: 'Dashboard', href: '/dashboard', icon: <LayoutGrid className="h-4 w-4" /> },
-  { title: 'Catálogo de Clases', href: '/dashboard/classes', icon: <Calendar className="h-4 w-4" /> },
-  { title: 'Mis Clases', href: '/dashboard/my-classes', icon: <Book className="h-4 w-4" /> },
+export const studentNav: NavItem[] = [
+  { label: 'Dashboard', href: '/dashboard', icon: <LayoutGrid /> },
+  { label: 'Catálogo de Clases', href: '/dashboard/classes', icon: <Calendar /> },
+  { label: 'Mis Clases', href: '/dashboard/my-classes', icon: <Book /> },
 ];
-
-    

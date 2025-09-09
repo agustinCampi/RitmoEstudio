@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '../ui/skeleton';
+import { useAuth } from '@/hooks/use-auth';
 
 const dayMapping: { [key: string]: number } = {
   'domingo': 0, 'lunes': 1, 'martes': 2, 'miércoles': 3, 'jueves': 4, 'viernes': 5, 'sábado': 6,
@@ -44,8 +45,21 @@ interface ClassCalendarProps {
 
 export function ClassCalendar({ classes, highlightedClasses = [], loading = false }: ClassCalendarProps) {
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const { user } = useAuth();
   
-  const highlightedClassIds = useMemo(() => new Set(highlightedClasses.map(c => c.id)), [highlightedClasses]);
+  const highlightedClassIds = useMemo(() => {
+    const myClassIds = new Set<string>();
+    if(user?.role === 'student'){
+      // In a real app this would come from a bookings table
+      // Here we just use the highlightedClasses prop which is pre-filtered
+      return new Set(highlightedClasses.map(c => c.id));
+    }
+    if(user?.role === 'teacher'){
+      return new Set(classes.filter(c => c.teacher_id === user.id).map(c => c.id));
+    }
+    return myClassIds;
+  }, [highlightedClasses, classes, user]);
+
 
   const classesByDate = useMemo(() => {
     const today = new Date();
@@ -154,7 +168,7 @@ export function ClassCalendar({ classes, highlightedClasses = [], loading = fals
                                 )}>
                                     <div className="flex justify-between items-center">
                                       <p className="font-bold text-sm">{cls.name}</p>
-                                      {highlightedClassIds.has(cls.id) && <Star className="h-4 w-4 text-primary" />}
+                                      {highlightedClassIds.has(cls.id) && <Star className="h-4 w-4 text-primary fill-current" />}
                                     </div>
                                     <p className="text-xs text-muted-foreground">con {cls.teacher_name}</p>
                                     <div className="flex items-center gap-2 text-xs text-primary pt-1">
@@ -183,7 +197,7 @@ export function ClassCalendar({ classes, highlightedClasses = [], loading = fals
                                     </div>
                                      <div className="flex items-center gap-2">
                                         <Users className="h-4 w-4 text-primary" />
-                                        <span>Cupos: <span className="font-medium">{cls.booked_students} / {cls.max_students}</span></span>
+                                        <span>Cupos: <span className="font-medium">{cls.booked_students || 0} / {cls.max_students}</span></span>
                                     </div>
                                 </div>
                             </DialogContent>
