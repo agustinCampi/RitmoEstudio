@@ -1,105 +1,89 @@
+'use client';
 
-"use client";
-
-import { useState } from 'react';
-import type { User as StudentProfile } from '@/lib/types';
-import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
-import { Button } from '../ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Check, X } from 'lucide-react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-
-type AttendanceStatus = 'presente' | 'ausente' | 'no-marcado';
-type AttendanceState = {
-  [studentId: string]: AttendanceStatus;
-};
+import { useState, useTransition } from 'react';
+import { type User } from '@/lib/types';
+import { saveAttendance, type AttendanceStatus } from '@/app/dashboard/attendance/actions';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
+import { Loader2 } from 'lucide-react';
 
 interface AttendanceTrackerProps {
   classId: string;
-  students: StudentProfile[];
+  students: User[];
 }
+
+const getCurrentDateString = () => {
+  const today = new Date();
+  return today.toISOString().split('T')[0];
+};
 
 export default function AttendanceTracker({ classId, students }: AttendanceTrackerProps) {
   const { toast } = useToast();
-  const [attendance, setAttendance] = useState<AttendanceState>(() => {
-    const initialState: AttendanceState = {};
-    students.forEach(s => {
-      initialState[s.id] = 'no-marcado';
-    });
-    return initialState;
-  });
+  const [isPending, startTransition] = useTransition();
+  const [attendance, setAttendance] = useState<Record<string, AttendanceStatus>>({});
+  
+  // Para saber qué botón específico está cargando
+  const [loadingStudentId, setLoadingStudentId] = useState<string | null>(null);
 
-  const handleMarkAttendance = (studentId: string, studentName: string, status: 'presente' | 'ausente') => {
-    setAttendance(prev => ({
-      ...prev,
-      [studentId]: status,
-    }));
-    
-    // Simulate API call to Make.com
-    console.log('Webhook a Make.com (Registrar Asistencia):', {
-      id_clase: classId,
-      id_alumno: studentId,
-      estado: status,
-      fecha: new Date().toISOString(),
-    });
+  const handleSetAttendance = (studentId: string, status: AttendanceStatus) => {
+    setLoadingStudentId(studentId);
+    startTransition(async () => {
+      const result = await saveAttendance({
+        classId: classId,
+        studentId: studentId,
+        status: status,
+        date: getCurrentDateString(),
+      });
 
-    toast({
-      title: 'Asistencia registrada',
-      description: `${studentName} ha sido marcado como ${status}.`,
+      if (result.success) {
+        setAttendance(prev => ({ ...prev, [studentId]: status }));
+        toast({
+          title: 'Éxito',
+          description: `Asistencia guardada.`,
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: result.error || 'No se pudo guardar la asistencia.',
+          variant: 'destructive',
+        });
+      }
+      setLoadingStudentId(null);
     });
   };
 
-  const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('');
-  const today = format(new Date(), "EEEE, d 'de' MMMM", { locale: es });
-
+  if (students.length === 0) {
+    return <p className="text-center text-muted-foreground">No hay alumnos inscritos en esta clase.</p>;
+  }
 
   return (
-    <Card className="border-0">
-      <CardHeader>
-        <CardTitle>Lista de Alumnos Inscritos</CardTitle>
-        <CardDescription>
-            Marca la asistencia para la clase de hoy, {today}.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {students.map(student => {
-            const status = attendance[student.id];
-            return (
-              <div key={student.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                <div className="flex items-center gap-4">
-                  <Avatar>
-                    <AvatarImage src={`https://avatar.vercel.sh/${student.email}.png`} />
-                    <AvatarFallback>{getInitials(student.name)}</AvatarFallback>
-                  </Avatar>
-                  <span className="font-medium">{student.name}</span>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant={status === 'presente' ? 'default' : 'outline'}
-                    onClick={() => handleMarkAttendance(student.id, student.name, 'presente')}
-                    className="border-green-600 text-green-500 hover:bg-green-600 hover:text-white"
-                  >
-                    <Check className="mr-2 h-4 w-4" />
-                    Presente
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={status === 'ausente' ? 'destructive' : 'outline'}
-                    onClick={() => handleMarkAttendance(student.id, student.name, 'ausente')}
-                  >
-                    <X className="mr-2 h-4 w-4" />
-                    Ausente
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      {students.map(student => {
+        const studentIsLoading = isPending && loadingStudentId === student.id;
+        return (
+          <div key={student.id} className="flex items-center justify-between p-4 rounded-lg border bg-card text-card-foreground shadow-sm">
+            <span className="font-medium">{student.name || 'Nombre no disponible'}</span>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => handleSetAttendance(student.id, 'present')}
+                disabled={studentIsLoading}
+                variant={attendance[student.id] === 'present' ? 'default' : 'outline'}
+              >
+                {studentIsLoading && attendance[student.id] !== 'present' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Presente
+              </Button>
+              <Button
+                onClick={() => handleSetAttendance(student.id, 'absent')}
+                disabled={studentIsLoading}
+                variant={attendance[student.id] === 'absent' ? 'destructive' : 'outline'}
+              >
+                {studentIsLoading && attendance[student.id] !== 'absent' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Ausente
+              </Button>
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }

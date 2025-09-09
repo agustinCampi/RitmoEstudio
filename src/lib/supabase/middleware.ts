@@ -1,13 +1,8 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import { type NextRequest, NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 
 export const createClient = (request: NextRequest) => {
-  // Create an unmodified response
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  });
+  let response = NextResponse.next({ request: { headers: request.headers } });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,40 +13,14 @@ export const createClient = (request: NextRequest) => {
           return request.cookies.get(name)?.value;
         },
         set(name: string, value: string, options: CookieOptions) {
-          // If the cookie is set, update the response cookies
-          request.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          });
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          });
+          request.cookies.set({ name, value, ...options });
+          response = NextResponse.next({ request: { headers: request.headers } });
+          response.cookies.set({ name, value, ...options });
         },
         remove(name: string, options: CookieOptions) {
-          // If the cookie is removed, update the response cookies
-          request.cookies.set({
-            name,
-            value: '',
-            ...options,
-          });
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          });
-          response.cookies.set({
-            name,
-            value: '',
-            ...options,
-          });
+          request.cookies.set({ name, value: '', ...options });
+          response = NextResponse.next({ request: { headers: request.headers } });
+          response.cookies.set({ name, value: '', ...options });
         },
       },
     }
@@ -59,3 +28,23 @@ export const createClient = (request: NextRequest) => {
 
   return { supabase, response };
 };
+
+
+export async function updateSession(request: NextRequest) {
+  const { supabase, response } = createClient(request);
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const { pathname } = request.nextUrl;
+  if (!user && pathname.startsWith('/dashboard')) {
+    const url = new URL('/', request.url);
+    return NextResponse.redirect(url);
+  }
+  if(user && pathname === '/'){
+    const url = new URL('/dashboard', request.url);
+    return NextResponse.redirect(url);
+  }
+
+  await supabase.auth.getSession();
+
+  return response;
+}

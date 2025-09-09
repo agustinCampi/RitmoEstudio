@@ -1,121 +1,64 @@
+import { createClient } from '@/lib/supabase/server';
+import { cookies } from 'next/headers';
+import { notFound, redirect } from 'next/navigation';
+import { checkRole } from '@/lib/utils';
+import { type User } from '@/lib/types';
+// Asumiremos que este componente será adaptado para recibir las props correctas
+import AttendanceTracker from '@/components/teacher/attendance-tracker'; 
 
-"use client";
+export default async function AttendancePage({ params }: { params: { classId: string } }) {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
 
-import { useAuth } from "@/hooks/use-auth";
-import AttendanceTracker from "@/components/teacher/attendance-tracker";
-import { useRouter, useParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { Class, User } from "@/lib/types";
-import { Skeleton } from "@/components/ui/skeleton";
-
-export default function AttendancePage() {
-  const { user } = useAuth();
-  const router = useRouter();
-  const params = useParams();
-  const classId = params ? (Array.isArray(params.classId) ? params.classId[0] : params.classId as string) : '';
-  const supabase = createClient();
-  
-  const [classData, setClassData] = useState<Class | null>(null);
-  const [studentsInClass, setStudentsInClass] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchClassAndStudents = async () => {
-        if (!classId) return;
-        setLoading(true);
-
-        // Fetch class details
-        const { data: classInfo, error: classError } = await supabase
-            .from('classes')
-            .select('*')
-            .eq('id', classId)
-            .single();
-
-        if (classError || !classInfo) {
-            console.error("Error fetching class data:", classError);
-            setLoading(false);
-            return;
-        }
-        setClassData(classInfo as Class);
-
-        // In a real app, you would fetch students from a 'bookings' table.
-        // Here, we just fetch a few mock students for demonstration.
-        const { data: studentProfiles, error: studentError } = await supabase
-            .from('users')
-            .select('*')
-            .eq('role', 'student')
-            .limit(5);
-
-        if (studentError) {
-             console.error("Error fetching students:", studentError);
-        } else {
-            setStudentsInClass(studentProfiles as User[]);
-        }
-
-        setLoading(false);
-    };
-
-    fetchClassAndStudents();
-  }, [classId]);
-
-
-  useEffect(() => {
-    if (user && user.role !== 'teacher') {
-      router.push('/dashboard');
-    }
-  }, [user, router]);
-  
-  if (!user || user.role !== 'teacher') {
-    return null;
-  }
-  
-  if (loading) {
-    return (
-        <div className="w-full">
-            
-            <div className="px-4 sm:px-0 space-y-4">
-                <Skeleton className="h-10 w-1/3" />
-                <Skeleton className="h-8 w-1/2" />
-                <div className="space-y-4">
-                    {[...Array(3)].map((_, i) => (
-                        <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                            <div className="flex items-center gap-4">
-                                <Skeleton className="h-10 w-10 rounded-full" />
-                                <Skeleton className="h-6 w-32" />
-                            </div>
-                            <div className="flex gap-2">
-                                <Skeleton className="h-9 w-24" />
-                                <Skeleton className="h-9 w-24" />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    redirect('/login');
   }
 
-  if (!classData) {
-    return (
-        <div className="w-full">
-            
-            <div className="text-center py-12">
-                <h3 className="font-headline text-2xl">Clase no encontrada</h3>
-                <p className="text-muted-foreground mt-2">No se pudo encontrar la clase que estás buscando.</p>
-            </div>
-        </div>
-    )
+  // 1. Obtener los detalles de la clase y verificar los permisos
+  const { data: danceClass, error: classError } = await supabase
+    .from('classes')
+    .select('name, teacher_id')
+    .eq('id', params.classId)
+    .single();
+
+  if (classError || !danceClass) {
+    notFound(); // La clase no existe
   }
+
+  // Lógica de seguridad: Solo el profesor de la clase o un admin pueden acceder
+  const isAdmin = user.role === 'admin';
+  const isClassTeacher = user.id === danceClass.teacher_id;
+
+  if (!isAdmin && !isClassTeacher) {
+    redirect('/dashboard'); // No tienes permiso para ver esta página
+  }
+
+  // 2. Obtener la lista de alumnos inscritos en esta clase
+  const { data: students, error: studentsError } = await supabase
+    .from('class_enrollments')
+    .select('users(*)') // Usamos un JOIN implícito de Supabase
+    .eq('class_id', params.classId);
+
+  if (studentsError) {
+    // Aquí podríamos mostrar un mensaje de error más amigable
+    return <p>Error al cargar los alumnos: {studentsError.message}</p>;
+  }
+
+  // El resultado de la consulta con JOIN anida los perfiles de usuario
+  const enrolledStudents = students.map(enrollment => enrollment.users) as User[];
 
   return (
-    <div className="w-full">
-      
-      <div className="px-4 sm:px-0">
-        <AttendanceTracker classId={classId} students={studentsInClass} />
+    <div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">Pasar Lista</h1>
+        <h2 className="text-lg text-gray-600 dark:text-gray-400">Clase: {danceClass.name}</h2>
       </div>
+      {/* 
+        Pasamos la lista REAL de estudiantes al componente cliente.
+        Este componente ahora solo se encarga de la UI y de llamar a la Server Action.
+      */}
+      <AttendanceTracker classId={params.classId} students={enrolledStudents} />
     </div>
   );
 }
-
-    

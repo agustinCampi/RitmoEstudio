@@ -1,89 +1,87 @@
+'use client';
 
-"use client";
-
-import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Logo } from "@/components/logo";
-import { Loader2 } from "lucide-react";
+import { useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/components/ui/toast';
+import { Logo } from '@/components/logo';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const router = useRouter();
   const supabase = createClient();
+  const router = useRouter();
+  const { toast } = useToast();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError(null);
-    setIsSubmitting(true);
+    setIsLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-    try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+    if (error) {
+      toast({
+        title: 'Error al iniciar sesión',
+        description: error.message || 'Por favor, revisa tus credenciales.',
+        variant: 'destructive',
       });
-
-      if (signInError) {
-        throw new Error(signInError.message);
-      }
-      
-      // La redirección será manejada por el middleware.
-      // Refrescamos la ruta para que el middleware se re-ejecute con la nueva sesión.
-      router.refresh();
-
-    } catch (error: any) {
-       console.error("Error en el inicio de sesión:", error.message);
-       setError("Credenciales inválidas. Por favor, inténtalo de nuevo.");
-    } finally {
-        setIsSubmitting(false);
+      setIsLoading(false); // Asegurarse de detener la carga en caso de error
+    } else {
+      toast({
+        title: '¡Bienvenido!',
+        description: 'Has iniciado sesión correctamente.',
+      });
+      // Corregido: Usar router.refresh() para que el servidor reconozca la sesión
+      // El middleware se encargará de la redirección al dashboard.
+      router.refresh(); 
     }
+    // No es necesario setIsLoading(false) aquí porque la página se recargará.
   };
 
   return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
-        <div className="w-full max-w-md">
-          <div className="flex flex-col items-center mb-6">
-            <Logo />
-            <h1 className="text-3xl font-bold mt-4">RitmoEstudio</h1>
-            <p className="text-muted-foreground">Inicia sesión para continuar</p>
-          </div>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={isSubmitting}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
-              <Input
-                id="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isSubmitting}
-              />
-            </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isSubmitting ? "Iniciando sesión..." : "Iniciar Sesión"}
-            </Button>
-          </form>
+    <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
+      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md dark:bg-gray-800">
+        <div className="text-center">
+          <Logo />
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Inicia sesión</h1>
+          <p className="text-gray-600 dark:text-gray-400">Ingresa a la plataforma de RitmoEstudio.</p>
         </div>
+        <form onSubmit={handleLogin} className="space-y-6">
+          <div>
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="tu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={isLoading}
+            />
+          </div>
+          <div>
+            <Label htmlFor="password">Contraseña</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={isLoading}
+            />
+          </div>
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? 'Cargando...' : 'Entrar'}
+          </Button>
+        </form>
       </div>
+    </div>
   );
 }

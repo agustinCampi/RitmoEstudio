@@ -1,41 +1,22 @@
-
 export type UserRole = 'admin' | 'teacher' | 'student';
 
 export interface User {
-  id: string;
-  name: string;
+  id: string; // Corresponds to auth.users.id
   email: string;
+  name: string | null;
   role: UserRole;
-  created_at?: string;
+  // any other profile data
 }
 
-export type ClassLevel = 'principiante' | 'intermedio' | 'avanzado';
-
-export interface Class {
-  id: string;
-  name: string;
-  description: string;
-  teacher_id: string; 
-  schedule: string;
-  duration: number; 
-  max_students: number;
-  image: string;
-  level: ClassLevel;
-  teacher_name?: string; 
-  booked_students?: number;
-}
-
-export interface Booking {
-  id: string;
-  class_id: string;
-  student_id: string;
-  booking_date: Date;
-}
-
-export interface Attendance {
-  id: string;
-  class_id: string;
-  student_id: string;
-  date: Date;
-  status: 'presente' | 'ausente';
+// Definición centralizada para una clase de baile
+export interface DanceClass {
+  id: string; // uuid
+  created_at: string; // timestamp with time zone
+  name: string; // text
+  description: string; // text
+  teacher_id: string | null; // uuid, foreign key to users
+  // Horarios almacenados como un array de strings. Ej: ["Lunes 10:00-11:00", "Miércoles 10:00-11:00"]
+  schedule: string[];
+  // Podríamos añadir campos opcionales si queremos hacer joins
+  teacher_name?: string;
 }

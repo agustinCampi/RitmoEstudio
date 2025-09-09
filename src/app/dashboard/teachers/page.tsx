@@ -1,32 +1,38 @@
+import { createClient } from '@/lib/supabase/server';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+import TeachersTable from '@/components/teachers-table';
+import { checkRole } from '@/lib/utils';
 
-"use client";
+export default async function TeachersPage() {
+  // Proteger la ruta en el servidor
+  const isAdmin = await checkRole('admin');
+  if (!isAdmin) {
+    redirect('/dashboard');
+  }
 
-import { TeacherManagement } from "@/components/admin/teacher-management";
-import { useAuth } from "@/hooks/use-auth";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
 
+  const { data: teachers, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('role', 'teacher');
 
-export default function TeachersPage() {
-  const { user } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (user && user.role !== 'admin') {
-      router.push('/dashboard');
-    }
-  }, [user, router]);
-  
-  if (!user || user.role !== 'admin') {
-    return null; // or a loading/unauthorized component
+  if (error) {
+    console.error('Error fetching teachers:', error);
+    // Podríamos mostrar un mensaje de error aquí
   }
 
   return (
-    <div className="w-full">
-      
-      <TeacherManagement />
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Gestión de Profesores</h1>
+        <p className="text-muted-foreground">
+          Aquí puedes añadir, editar y eliminar profesores.
+        </p>
+      </div>
+      <TeachersTable teachers={teachers || []} />
     </div>
   );
 }
-
-    
