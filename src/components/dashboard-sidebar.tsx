@@ -7,7 +7,6 @@ import { cn } from '@/lib/utils';
 import { Logo } from './logo';
 import { useAuth } from '@/hooks/use-auth';
 import { adminNav, teacherNav, studentNav } from '@/config/nav-config';
-import DashboardHeader from './dashboard-header';
 
 export default function DashboardSidebar() {
   const pathname = usePathname();
@@ -30,7 +29,6 @@ export default function DashboardSidebar() {
   const navItems = getNavItems();
 
   return (
-    <>
     <div className="hidden border-r bg-muted/40 lg:block">
       <div className="flex h-full max-h-screen flex-col gap-2">
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
@@ -55,7 +53,5 @@ export default function DashboardSidebar() {
         </div>
       </div>
     </div>
-    <DashboardHeader />
-    </>
   );
 }
