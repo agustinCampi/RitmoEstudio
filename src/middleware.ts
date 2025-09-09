@@ -1,3 +1,4 @@
+
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
@@ -59,20 +60,18 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getSession()
 
   const { pathname } = request.nextUrl
-  const isPublicRoute = pathname === '/'
+
+  // if user is logged in and is trying to access the login page
+  if (session && pathname === '/') {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
 
   // if user is not logged in and is trying to access a protected route
-  if (!session && !isPublicRoute) {
+  if (!session && pathname.startsWith('/dashboard')) {
      const url = request.nextUrl.clone()
      url.pathname = '/'
      return NextResponse.redirect(url)
   }
-  
-  // if user is logged in and is trying to access the login page
-  if (session && isPublicRoute) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
-  }
-
 
   return response
 }
@@ -87,6 +86,6 @@ export const config = {
      * - /auth (auth routes)
      * - /_axiom (axiom logs)
      */
-    '/((?!_next/static|_next/image|favicon.ico|auth|_axiom).*)',
+    '/((?!_next/static|_next/image|favicon.ico|auth|_axiom|api).*)',
   ],
 }
