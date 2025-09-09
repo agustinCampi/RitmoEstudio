@@ -2,114 +2,86 @@
 "use client";
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation'; // Importar useRouter
 import { createClient } from '@/lib/supabase/client';
-
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Logo } from '@/components/logo';
-import { Loader2 } from 'lucide-react';
-
-
-const loginSchema = z.object({
-  email: z.string().email({ message: "Por favor, introduce un email válido." }),
-  password: z.string().min(1, { message: "La contraseña es obligatoria." }),
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function LoginPage() {
-  const router = useRouter();
-  const { toast } = useToast();
   const supabase = createClient();
-  
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
-  });
+  const router = useRouter(); // Inicializar el router
+  const [email, setEmail] = useState("admin@test.com");
+  const [password, setPassword] = useState("password");
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { formState } = form;
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
 
-  const onSubmit = async (data: LoginFormValues) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email: data.email,
-      password: data.password,
+    console.log("Intentando iniciar sesión con:", email);
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     });
 
-    if (error) {
-      toast({
-        title: "Error al iniciar sesión",
-        description: error.message || "Las credenciales no son correctas.",
-        variant: "destructive",
-      });
+    setIsSubmitting(false);
+
+    if (signInError) {
+      console.error("Error en el inicio de sesión:", signInError.message);
+      setError(signInError.message);
     } else {
+      // *** CAMBIO CLAVE: Redirección manual después del éxito ***
+      console.log("Inicio de sesión exitoso, redirigiendo al dashboard...");
       router.push('/dashboard');
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background p-4">
-      <Card className="w-full max-w-md border-0 bg-transparent shadow-none sm:border sm:bg-card sm:shadow-2xl">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-4">
-            <Logo />
+    <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="w-full max-w-md p-8 space-y-6 bg-card text-card-foreground rounded-lg shadow-lg">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold">Iniciar Sesión</h1>
+          <p className="text-muted-foreground">Accede a tu panel de control</p>
+        </div>
+        <form onSubmit={handleLogin} className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="email">Correo Electrónico</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="tu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="bg-input"
+            />
           </div>
-          <h1 className="font-headline text-4xl font-bold">Bienvenido a RitmoEstudio</h1>
-          <CardDescription>Inicia sesión para gestionar tus clases de baile.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="tu@email.com"
-                {...form.register('email')}
-              />
-              {formState.errors.email && (
-                <p className="text-sm text-destructive">{formState.errors.email.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Contraseña</Label>
-                 <Link
-                    href="/forgot-password"
-                    className="text-sm text-primary underline"
-                  >
-                    ¿Olvidaste tu contraseña?
-                  </Link>
-              </div>
-              <Input id="password" type="password" {...form.register('password')} />
-              {formState.errors.password && (
-                <p className="text-sm text-destructive">{formState.errors.password.message}</p>
-              )}
-            </div>
-            
-            <Button type="submit" className="w-full" disabled={formState.isSubmitting}>
-              {formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {formState.isSubmitting ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+          <div className="space-y-2">
+            <Label htmlFor="password">Contraseña</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="bg-input"
+            />
+          </div>
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? "Iniciando sesión..." : "Iniciar Sesión"}
+          </Button>
+        </form>
+      </div>
     </div>
   );
 }

@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { adminNav, teacherNav, studentNav } from "@/config/nav-config";
 import { Logo } from "./logo";
+import { UserMenu } from "@/components/user-menu";
 
 export default function DashboardHeader() {
   const pathname = usePathname();
@@ -45,7 +46,8 @@ export default function DashboardHeader() {
         return 'Tomar Asistencia';
     }
     if (pathname === '/dashboard') {
-        return `¡Hola, ${user?.name.split(' ')[0]}!`;
+        // Usar name en lugar de full_name
+        return `¡Hola, ${user?.name?.split(' ')[0]}!`;
     }
     return 'RitmoEstudio';
   }
@@ -92,6 +94,9 @@ export default function DashboardHeader() {
         <div className="w-full flex-1">
            <h1 className="text-lg font-semibold">{getTitle()}</h1>
         </div>
+
+        {/* Añadir el menú de usuario aquí */}
+        <UserMenu />
     </header>
   );
 }
