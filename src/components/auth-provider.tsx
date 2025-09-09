@@ -20,6 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     const fetchUserProfile = async (session: Session | null) => {
@@ -37,7 +38,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (error || !profile) {
         console.error("Error fetching user profile or profile not found:", error?.message);
-        // If profile is missing, might be a partial signup, log them out client-side
         await supabase.auth.signOut();
         setUser(null);
       } else {
@@ -46,7 +46,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     };
     
-    // Fetch initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
         fetchUserProfile(session);
     });
@@ -78,8 +77,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = { user, logout, loading };
 
-  // Don't show loading spinner for auth pages to prevent flashing
-  if (loading) {
+  const isAuthPage = pathname === '/';
+
+  if (loading && !isAuthPage) {
     return (
       <div className="flex items-center justify-center h-screen w-screen bg-background">
         <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>

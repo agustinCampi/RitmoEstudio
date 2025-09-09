@@ -59,7 +59,7 @@ export default function LoginPage() {
         variant: "destructive",
       });
     } else {
-      window.location.href = '/dashboard';
+      router.push('/dashboard');
     }
   };
 

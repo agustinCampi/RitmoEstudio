@@ -20,14 +20,20 @@ export default function DashboardPage() {
   const supabase = createClient();
 
   const fetchData = async () => {
+    if (!user) return;
     setLoading(true);
-    const [classesRes, studentsRes] = await Promise.all([
-      getClassesWithTeachers(),
-      supabase.from('users').select('*').eq('role', 'student')
-    ]);
+
+    const commonPromises = [getClassesWithTeachers()];
+    let promises = [...commonPromises];
+
+    if (user.role === 'admin') {
+      promises.push(supabase.from('users').select('*').eq('role', 'student'));
+    }
+
+    const [classesRes, studentsRes] = await Promise.all(promises);
     
     setClasses(classesRes as (Class & { teacher_name: string })[]);
-    if (studentsRes.data) setStudents(studentsRes.data as User[]);
+    if (studentsRes && 'data' in studentsRes) setStudents(studentsRes.data as User[]);
 
     setLoading(false);
   }

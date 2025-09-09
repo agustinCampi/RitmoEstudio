@@ -159,7 +159,7 @@ export function ClassCalendar({ classes, highlightedClasses = [], loading = fals
                                     <p className="text-xs text-muted-foreground">con {cls.teacher_name}</p>
                                     <div className="flex items-center gap-2 text-xs text-primary pt-1">
                                         <Clock className="h-3 w-3" />
-                                        <span>{cls.schedule}</span>
+                                        <span>{cls.schedule.split(',').pop()}</span>
                                     </div>
                                 </div>
                             </DialogTrigger>
@@ -200,5 +200,3 @@ export function ClassCalendar({ classes, highlightedClasses = [], loading = fals
     </Card>
   );
 }
-
-    
