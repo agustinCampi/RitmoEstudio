@@ -94,7 +94,6 @@ export default async function ClassesPage() {
     <div className="w-full">
       <DashboardHeader title={title} />
       <div className="px-4 sm:px-0">
-        {/* The @ts-ignore is needed because TS can't infer the props for the dynamic Component */}
         {/* @ts-ignore */}
         <Component {...props} />
       </div>

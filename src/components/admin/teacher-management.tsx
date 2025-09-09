@@ -13,7 +13,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { DashboardHeader } from '@/components/dashboard-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { createTeacher, updateTeacher, deleteTeacher } from '@/app/actions/teacher-actions';
 
@@ -84,19 +83,19 @@ export function TeacherManagement() {
 
   return (
     <div className="w-full">
-      <DashboardHeader title="Gestionar Profesores">
-         <Button onClick={openNewDialog}>
-           <PlusCircle className="mr-2 h-4 w-4" />
-           Añadir Profesor
-          </Button>
-      </DashboardHeader>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Profesores</h2>
+          <p className="text-muted-foreground">Aquí puedes ver, añadir, editar o eliminar profesores.</p>
+        </div>
+        <Button onClick={openNewDialog}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Añadir Profesor
+        </Button>
+      </div>
       <main className="p-4 sm:p-0">
         <Card>
-          <CardHeader>
-            <CardTitle>Lista de Profesores</CardTitle>
-            <CardDescription>Aquí puedes ver, añadir, editar o eliminar profesores.</CardDescription>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
              {loading ? <SkeletonLoader /> : (
                 <Table>
                 <TableHeader>
@@ -145,7 +144,7 @@ export function TeacherManagement() {
               <DialogTitle>{editingTeacher ? 'Editar Profesor' : 'Añadir Nuevo Profesor'}</DialogTitle>
               <DialogDescription>
                 {editingTeacher ? 'Edita los detalles del profesor.' : 'Rellena los detalles para añadir un nuevo profesor.'}
-              </DDescription>
+              </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
                {editingTeacher && <input type="hidden" name="id" value={editingTeacher.id} />}
