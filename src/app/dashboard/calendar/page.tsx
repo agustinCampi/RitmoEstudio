@@ -1,7 +1,6 @@
 
 "use client";
 
-import DashboardHeader from "@/components/dashboard-header";
 import { ClassCalendar } from "@/components/dashboard/class-calendar";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState } from "react";
@@ -52,7 +51,7 @@ export default function CalendarPage() {
 
     return (
         <div className="w-full">
-            <DashboardHeader title="Calendario de Clases" />
+            
             <div className="px-4 sm:px-0">
                 <ClassCalendar 
                     classes={calendarClasses}
@@ -63,3 +62,5 @@ export default function CalendarPage() {
         </div>
     );
 }
+
+    

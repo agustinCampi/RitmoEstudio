@@ -11,7 +11,6 @@ import { createClient } from "@/lib/supabase/client";
 import { Class, User } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getClassesWithTeachers } from "../actions/class-actions";
-import DashboardHeader from "@/components/dashboard-header";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -155,10 +154,11 @@ export default function DashboardPage() {
 
   return (
     <div className="w-full space-y-4">
-       <DashboardHeader title={`¡Hola, ${user?.name.split(' ')[0]}!`} />
         {user?.role === 'admin' && <AdminDashboard />}
         {user?.role === 'teacher' && <TeacherDashboard />}
         {user?.role === 'student' && <StudentDashboard />}
     </div>
   );
 }
+
+    

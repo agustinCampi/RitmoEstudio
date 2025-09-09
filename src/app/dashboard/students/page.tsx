@@ -2,7 +2,6 @@
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
-import DashboardHeader from "@/components/dashboard-header";
 import StudentManagement from "@/components/admin/student-management";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -23,10 +22,12 @@ export default function StudentsPage() {
 
   return (
     <div className="w-full">
-      <DashboardHeader title="Gestionar Alumnos" />
+      
       <div className="px-4 sm:px-0">
         <StudentManagement />
       </div>
     </div>
   );
 }
+
+    

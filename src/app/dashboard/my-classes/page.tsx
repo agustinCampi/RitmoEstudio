@@ -2,7 +2,6 @@
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
-import DashboardHeader from "@/components/dashboard-header";
 import MyClasses from "@/components/student/my-classes";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -23,10 +22,12 @@ export default function MyClassesPage() {
 
   return (
     <div className="w-full">
-      <DashboardHeader title="Mis Clases Reservadas" />
+      
       <div className="px-4 sm:px-0">
         <MyClasses />
       </div>
     </div>
   );
 }
+
+    

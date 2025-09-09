@@ -2,7 +2,6 @@
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
-import DashboardHeader from "@/components/dashboard-header";
 import AttendanceTracker from "@/components/teacher/attendance-tracker";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -74,7 +73,7 @@ export default function AttendancePage() {
   if (loading) {
     return (
         <div className="w-full">
-            <DashboardHeader title="Asistencia" />
+            
             <div className="px-4 sm:px-0 space-y-4">
                 <Skeleton className="h-10 w-1/3" />
                 <Skeleton className="h-8 w-1/2" />
@@ -100,7 +99,7 @@ export default function AttendancePage() {
   if (!classData) {
     return (
         <div className="w-full">
-            <DashboardHeader title="Error" />
+            
             <div className="text-center py-12">
                 <h3 className="font-headline text-2xl">Clase no encontrada</h3>
                 <p className="text-muted-foreground mt-2">No se pudo encontrar la clase que estás buscando.</p>
@@ -111,10 +110,12 @@ export default function AttendancePage() {
 
   return (
     <div className="w-full">
-      <DashboardHeader title={`Asistencia: ${classData.name}`} />
+      
       <div className="px-4 sm:px-0">
         <AttendanceTracker classId={classId} students={studentsInClass} />
       </div>
     </div>
   );
 }
+
+    

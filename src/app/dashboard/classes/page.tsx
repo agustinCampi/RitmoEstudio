@@ -3,7 +3,6 @@ import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import { redirect } from 'next/navigation';
 
-import DashboardHeader from "@/components/dashboard-header";
 import ClassManagement from "@/components/admin/class-management";
 import ClassCatalog from "@/components/student/class-catalog";
 import { getClassesWithTeachers } from '@/app/actions/class-actions';
@@ -39,7 +38,7 @@ export default async function ClassesPage() {
   if (!userProfile) {
     return (
       <div className="w-full">
-        <DashboardHeader title="Error" />
+        
         <div className="px-4 sm:px-0"><p>Error: Could not determine user role.</p></div>
       </div>
     );
@@ -57,7 +56,7 @@ export default async function ClassesPage() {
   if (isAdmin && teachersError) {
     return (
        <div className="w-full">
-        <DashboardHeader title="Error" />
+        
         <div className="px-4 sm:px-0"><p>Error cargando los datos de profesores. Por favor, intenta de nuevo.</p></div>
       </div>
     )
@@ -92,7 +91,7 @@ export default async function ClassesPage() {
 
   return (
     <div className="w-full">
-      <DashboardHeader title={title} />
+      
       <div className="px-4 sm:px-0">
         {/* @ts-ignore */}
         <Component {...props} />
@@ -100,3 +99,5 @@ export default async function ClassesPage() {
     </div>
   );
 }
+
+    
