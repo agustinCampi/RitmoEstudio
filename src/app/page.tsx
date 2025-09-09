@@ -33,6 +33,8 @@ export default function LoginPage() {
         throw new Error(signInError.message);
       }
       
+      // La redirección será manejada por el middleware y el AuthProvider.
+      // Solo refrescamos la ruta actual para activar el middleware.
       router.refresh();
 
     } catch (error: any) {

@@ -11,27 +11,22 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // Redirect to dashboard if user is logged in and tries to access root
-  if (session && pathname === '/') {
+  const isAuthRoute = pathname === '/';
+  const isDashboardRoute = pathname.startsWith('/dashboard');
+
+  // Redirect to dashboard if user is logged in and tries to access login page
+  if (session && isAuthRoute) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   // Redirect to login if user is not logged in and tries to access protected routes
-  if (!session && pathname.startsWith('/dashboard')) {
+  if (!session && isDashboardRoute) {
     return NextResponse.redirect(new URL('/', request.url));
   }
   
-  if (session && pathname.startsWith('/admin')) {
-      const { data: user, error } = await supabase
-      .from('users') 
-      .select('role')
-      .eq('id', session.user.id)
-      .single();
-
-    if (error || !user || user.role !== 'admin') {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
-  }
+  // Specific role checks can go here if needed in the future
+  // For example:
+  // if (session && pathname.startsWith('/admin')) { ... }
 
   return response;
 }

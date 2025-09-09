@@ -3,9 +3,9 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Session, User } from '@supabase/supabase-js';
+import type { Session, User } from '@supabase/supabase-js';
 
-// Definir un tipo más detallado para el perfil del usuario
+// Definir un tipo más detallado para el perfil del usuario, que coincida con la DB
 interface UserProfile {
   id: string;
   name: string;
@@ -31,95 +31,75 @@ interface AuthProviderProps {
 // Crear el componente proveedor de autenticación
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const supabase = createClient();
-  const [user, setUser] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log("AuthProvider: Suscribiéndose a cambios de estado de autenticación.");
-
-    const getInitialSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      console.log("AuthProvider: Sesión inicial obtenida:", data.session);
-      if (error) {
-        console.error("AuthProvider: Error al obtener la sesión inicial:", error);
-        setLoading(false);
-        return;
-      }
-
-      const currentSession = data.session;
-      setSession(currentSession);
-
-      if (currentSession?.user) {
-        await fetchUserProfile(currentSession.user);
+    // Iniciar con la sesión actual, si existe
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session?.user) {
+        fetchUserProfile(session.user);
       } else {
-        console.log("AuthProvider: No hay sesión, estableciendo user a null.");
-        setUser(null);
-      }
-      setLoading(false);
-    };
-
-    getInitialSession();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-      console.log("AuthProvider: Evento de authStateChange detectado:", event);
-      setSession(currentSession);
-
-      if (event === 'SIGNED_IN' && currentSession?.user) {
-        await fetchUserProfile(currentSession.user);
-      } else if (event === 'SIGNED_OUT') {
-        console.log("AuthProvider: Cierre de sesión, estableciendo user a null.");
-        setUser(null);
+        setLoading(false);
       }
     });
+
+    // Escuchar cambios en el estado de autenticación
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, currentSession) => {
+        setSession(currentSession);
+        if (currentSession?.user) {
+            // Si hay una sesión, siempre intentar obtener el perfil
+            await fetchUserProfile(currentSession.user);
+        } else {
+            // Si no hay sesión, limpiar el usuario
+            setUser(null);
+        }
+        // La carga solo finaliza después de procesar el evento
+        setLoading(false);
+      }
+    );
 
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [supabase]);
+  }, []);
 
-  const fetchUserProfile = async (user: User) => {
-    console.log("AuthProvider: fetchUserProfile iniciado.");
-    if (!user) {
-        console.log("AuthProvider: fetchUserProfile abortado, no hay usuario.");
-        return;
-    }
-    console.log(`AuthProvider: Sesión activa, intentando obtener perfil para user ID: ${user.id}`);
-    setLoading(true);
+  const fetchUserProfile = async (authUser: User) => {
     try {
-        const { data: profile, error } = await supabase
-            .from('users')
-            .select('id, name, email, role')
-            .eq('id', user.id)
-            .single();
-
-        console.log("Respuesta de Supabase - error:", error);
-        if (error && error.code !== 'PGRST116') { // PGRST116: "exact-cardinality-violation", no rows found
-            throw error;
-        }
-
-        if (profile) {
-            console.log("AuthProvider: Perfil de usuario cargado exitosamente.");
-            setUser(profile as UserProfile);
-        } else {
-            console.log("AuthProvider: No se encontró perfil para el usuario.");
-            setUser(null);
-        }
+      const { data: profile, error } = await supabase
+        .from('users')
+        .select('id, name, email, role')
+        .eq('id', authUser.id)
+        .single();
+      
+      if (error) {
+          // Si el error es que no se encuentra la fila, es normal en un flujo de registro
+          if (error.code !== 'PGRST116') {
+             throw error;
+          }
+          setUser(null);
+      } else {
+          setUser(profile as UserProfile);
+      }
     } catch (error) {
-        console.error("AuthProvider: Error al cargar el perfil del usuario:", error);
-        setUser(null);
+      console.error("Error al cargar el perfil del usuario:", error);
+      setUser(null);
     } finally {
-        console.log("AuthProvider: fetchUserProfile finalizado.");
+        // Asegurarse de que el estado de carga termine aquí
         setLoading(false);
     }
   };
-
+  
   const value = {
     user,
     session,
     loading,
   };
 
+  // No renderizar nada hasta que se haya determinado el estado de autenticación
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
