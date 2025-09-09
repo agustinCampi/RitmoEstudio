@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
-import AuthRedirect from "@/components/AuthRedirect";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -28,18 +27,18 @@ export default function LoginPage() {
       password,
     });
 
-    setIsSubmitting(false);
-
     if (signInError) {
       console.error("Error en el inicio de sesión:", signInError.message);
       setError("Credenciales inválidas. Por favor, inténtalo de nuevo.");
+      setIsSubmitting(false);
     } else {
+      // router.refresh() will trigger the middleware to re-run
+      // and handle the redirect to the dashboard.
       router.refresh();
     }
   };
 
   return (
-    <>
       <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
         <div className="w-full max-w-md">
           <div className="flex flex-col items-center mb-6">
@@ -78,6 +77,5 @@ export default function LoginPage() {
           </form>
         </div>
       </div>
-    </>
   );
 }

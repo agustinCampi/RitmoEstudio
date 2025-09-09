@@ -10,13 +10,10 @@ const AuthRedirect = () => {
   const router = useRouter();
 
   useEffect(() => {
-    // Only redirect if done loading and user exists.
-    // This is useful for pages that should not be seen by authenticated users (e.g. login, register)
-    if (!loading && user) {
-      console.log("AuthRedirect: User detected, redirecting to dashboard...");
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
+    // This component is no longer used for redirection.
+    // The middleware handles all redirection logic now.
+    // Keeping the file to avoid breaking imports, but it does nothing.
+  }, []);
 
   // This component does not render anything.
   return null;

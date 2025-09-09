@@ -2,37 +2,35 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/middleware';
 
-const protectedRoutes = ['/dashboard', '/admin'];
-const adminRoutes = ['/admin'];
-
 export async function middleware(request: NextRequest) {
   const { supabase, response } = createClient(request);
 
+  // Refresh session if expired - important for Server Components
+  // https://supabase.com/docs/guides/auth/auth-helpers/nextjs#managing-session-with-middleware
   const { data: { session } } = await supabase.auth.getSession();
 
   const { pathname } = request.nextUrl;
 
-  if (session && (pathname === '/' || pathname === '/login')) {
+  // Redirect to dashboard if user is logged in and tries to access root
+  if (session && pathname === '/') {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  if (!session && protectedRoutes.includes(pathname)) {
+  // Redirect to login if user is not logged in and tries to access protected routes
+  if (!session && pathname.startsWith('/dashboard')) {
     return NextResponse.redirect(new URL('/', request.url));
   }
-
-  if (session && adminRoutes.includes(pathname)) {
-    // **CAMBIO CLAVE: Leer desde la tabla 'users' en lugar de 'profiles'**
-    const { data: user, error } = await supabase
+  
+  if (session && pathname.startsWith('/admin')) {
+      const { data: user, error } = await supabase
       .from('users') 
       .select('role')
       .eq('id', session.user.id)
       .single();
 
     if (error || !user || user.role !== 'admin') {
-      console.log('Middleware: Acceso de no-administrador denegado. Redirigiendo...');
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
-    console.log('Middleware: Acceso de administrador verificado.');
   }
 
   return response;
@@ -40,9 +38,13 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/',
-    '/login',
-    '/dashboard',
-    '/admin',
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * Feel free to modify this pattern to include more paths.
+     */
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };
