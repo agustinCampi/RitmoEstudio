@@ -1,19 +1,28 @@
+
 'use client';
 
 import Link from "next/link";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { adminNav, teacherNav, studentNav } from "@/config/nav-config";
 import { Logo } from "./logo";
+import { useState } from "react";
 
 
 export default function DashboardHeader({ title }: { title?: string }) {
   const pathname = usePathname();
   const { user } = useAuth();
+  const [isSheetOpen, setSheetOpen] = useState(false);
 
   const getNavItems = () => {
     switch (user?.role) {
@@ -29,7 +38,7 @@ export default function DashboardHeader({ title }: { title?: string }) {
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
        <div className="lg:hidden">
-          <Sheet>
+          <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="shrink-0">
                 <Menu className="h-5 w-5" />
@@ -48,6 +57,7 @@ export default function DashboardHeader({ title }: { title?: string }) {
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={() => setSheetOpen(false)}
                     className={cn(
                       "mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground",
                       pathname === item.href && "bg-muted text-foreground"
