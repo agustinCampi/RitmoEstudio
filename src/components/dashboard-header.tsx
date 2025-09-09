@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from "next/link";
@@ -19,7 +20,7 @@ import { Logo } from "./logo";
 import { useState } from "react";
 
 
-export default function DashboardHeader({ title }: { title?: string }) {
+export default function DashboardHeader() {
   const pathname = usePathname();
   const { user } = useAuth();
 
@@ -32,7 +33,25 @@ export default function DashboardHeader({ title }: { title?: string }) {
     }
   }
 
-  const currentNavItems = getNavItems();
+  const navItems = getNavItems();
+
+  const pageTitles: { [key: string]: string } = {
+    '/dashboard': `¡Hola, ${user?.name.split(' ')[0]}!`,
+    '/dashboard/classes': 'Clases',
+    '/dashboard/students': 'Gestionar Alumnos',
+    '/dashboard/teachers': 'Gestionar Profesores',
+    '/dashboard/assigned-classes': 'Mis Clases Asignadas',
+    '/dashboard/my-classes': 'Mis Clases Reservadas',
+    '/dashboard/calendar': 'Calendario de Clases',
+  };
+
+  const getTitle = () => {
+    if (pathname.startsWith('/dashboard/attendance/')) {
+        return 'Tomar Asistencia';
+    }
+    return pageTitles[pathname] || 'RitmoEstudio';
+  }
+
 
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6 sticky top-0 bg-background z-30">
@@ -48,31 +67,32 @@ export default function DashboardHeader({ title }: { title?: string }) {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="flex flex-col p-0">
-            <SheetHeader className="p-6 pb-2">
-                <SheetTitle>RitmoEstudio</SheetTitle>
+            <SheetHeader className="p-6 pb-2 border-b">
+                <SheetTitle>
+                  <Logo />
+                </SheetTitle>
             </SheetHeader>
             <nav className="grid gap-2 text-lg font-medium p-6">
-            
-            {currentNavItems.map((item) => (
-              <SheetClose asChild key={item.href}>
-                <Link
-                href={item.href}
-                className={cn(
-                    "flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground",
-                    pathname === item.href && "bg-muted text-foreground"
-                )}
-                >
-                {item.icon}
-                {item.title}
-                </Link>
-              </SheetClose>
-            ))}
+              {navItems.map((item) => (
+                <SheetClose asChild key={item.href}>
+                  <Link
+                  href={item.href}
+                  className={cn(
+                      "flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground",
+                      pathname === item.href && "bg-muted text-foreground"
+                  )}
+                  >
+                  {item.icon}
+                  {item.title}
+                  </Link>
+                </SheetClose>
+              ))}
             </nav>
         </SheetContent>
         </Sheet>
 
         <div className="w-full flex-1">
-           {title && <h1 className="text-lg font-semibold">{title}</h1>}
+           <h1 className="text-lg font-semibold">{getTitle()}</h1>
         </div>
     </header>
   );
