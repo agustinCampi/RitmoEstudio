@@ -1,11 +1,18 @@
+
+import { type User as SupabaseUser } from '@supabase/supabase-js';
+
 export type UserRole = 'admin' | 'teacher' | 'student';
 
-export interface User {
-  id: string; // Corresponds to auth.users.id
+// This combines the auth user with our public.users profile
+export interface User extends SupabaseUser {
+  id: string; 
   email: string;
   name: string | null;
   role: UserRole;
-  // any other profile data
+  user_metadata: {
+    [key: string]: any;
+    full_name?: string;
+  }
 }
 
 // Definición centralizada para una clase de baile
@@ -13,8 +20,8 @@ export interface DanceClass {
   id: string; // uuid
   created_at: string; // timestamp with time zone
   name: string; // text
-  description: string; // text
-  teacher_id: string | null; // uuid, foreign key to users
+  description: string | null; // text
+  teacher_id: string; // uuid, foreign key to users
   // Horarios almacenados como un array de strings. Ej: ["Lunes 10:00-11:00", "Miércoles 10:00-11:00"]
   schedule: string[];
   // Podríamos añadir campos opcionales si queremos hacer joins

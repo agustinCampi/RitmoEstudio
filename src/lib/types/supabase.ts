@@ -10,44 +10,107 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      attendance_records: {
+        Row: {
+          class_id: string
+          created_at: string
+          date: string
+          id: string
+          status: Database["public"]["Enums"]["attendance_status"]
+          student_id: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          date: string
+          id?: string
+          status: Database["public"]["Enums"]["attendance_status"]
+          student_id: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          date?: string
+          id?: string
+          status?: Database["public"]["Enums"]["attendance_status"]
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_records_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_records_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      class_enrollments: {
+        Row: {
+          class_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_enrollments_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_enrollments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       classes: {
         Row: {
-          booked_students: number | null
           created_at: string
-          description: string
-          duration: number
+          description: string | null
           id: string
-          image: string
-          level: Database["public"]["Enums"]["class_level"]
-          max_students: number
           name: string
-          schedule: string
+          schedule: string[]
           teacher_id: string
         }
         Insert: {
-          booked_students?: number | null
           created_at?: string
-          description: string
-          duration: number
+          description?: string | null
           id?: string
-          image: string
-          level: Database["public"]["Enums"]["class_level"]
-          max_students?: number
           name: string
-          schedule: string
+          schedule: string[]
           teacher_id: string
         }
         Update: {
-          booked_students?: number | null
           created_at?: string
-          description?: string
-          duration?: number
+          description?: string | null
           id?: string
-          image?: string
-          level?: Database["public"]["Enums"]["class_level"]
-          max_students?: number
           name?: string
-          schedule?: string
+          schedule?: string[]
           teacher_id?: string
         }
         Relationships: [
@@ -65,21 +128,21 @@ export type Database = {
           created_at: string
           email: string
           id: string
-          name: string
+          name: string | null
           role: Database["public"]["Enums"]["user_role"]
         }
         Insert: {
           created_at?: string
           email: string
           id: string
-          name: string
+          name?: string | null
           role: Database["public"]["Enums"]["user_role"]
         }
         Update: {
           created_at?: string
           email?: string
           id?: string
-          name?: string
+          name?: string | null
           role?: Database["public"]["Enums"]["user_role"]
         }
         Relationships: [
@@ -100,7 +163,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      class_level: "principiante" | "intermedio" | "avanzado"
+      attendance_status: "present" | "absent" | "late"
       user_role: "admin" | "teacher" | "student"
     }
     CompositeTypes: {

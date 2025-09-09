@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -20,28 +21,36 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
+      if (error) {
+        toast({
+          title: 'Error al iniciar sesión',
+          description: error.message || 'Por favor, revisa tus credenciales.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: '¡Bienvenido!',
+          description: 'Has iniciado sesión correctamente.',
+        });
+        // The auth provider will handle the redirect
+        router.push('/dashboard');
+      }
+    } catch (error: any) {
       toast({
-        title: 'Error al iniciar sesión',
-        description: error.message || 'Por favor, revisa tus credenciales.',
+        title: 'Error',
+        description: error.message || 'Ocurrió un error inesperado.',
         variant: 'destructive',
       });
-      setIsLoading(false); // Asegurarse de detener la carga en caso de error
-    } else {
-      toast({
-        title: '¡Bienvenido!',
-        description: 'Has iniciado sesión correctamente.',
-      });
-      // Corregido: Usar router.refresh() para que el servidor reconozca la sesión
-      // El middleware se encargará de la redirección al dashboard.
-      router.refresh(); 
+    } finally {
+      setIsLoading(false);
     }
-    // No es necesario setIsLoading(false) aquí porque la página se recargará.
   };
 
   return (

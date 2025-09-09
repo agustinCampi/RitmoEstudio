@@ -1,39 +1,60 @@
+import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+import AuthProvider from '@/components/auth-provider';
 import DashboardSidebar from '@/components/dashboard-sidebar';
 import DashboardHeader from '@/components/dashboard-header';
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from '@/components/ui/toaster';
+import { type User } from '@/lib/types';
 
 export default async function DashboardLayout({
   children,
-}: { 
+}: {
   children: React.ReactNode;
 }) {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
 
-  // Obtener la sesión del usuario en el servidor
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  // Redirigir si no hay usuario o hay un error
-  if (error || !user) {
-    redirect('/'); // Redirige a la página de inicio
+  if (!session) {
+    redirect('/');
   }
 
-  // Si el usuario existe, el layout se renderiza en el servidor
+  const { data: userProfile, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', session.user.id)
+    .single();
+  
+  if (error || !userProfile) {
+    // Esto puede pasar si el trigger de la BD falló.
+    // Es mejor cerrar sesión y redirigir.
+    await supabase.auth.signOut();
+    redirect('/');
+  }
+
+  // Combinamos la información de auth y de la tabla users
+  const appUser: User = {
+    ...session.user,
+    ...userProfile,
+  };
+
+
   return (
-    <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
-      {/* Pasamos el rol del usuario como prop al sidebar */}
-      <DashboardSidebar userRole={user.role} />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Pasamos el objeto de usuario completo al header por si lo necesita (ej: para el menú de usuario) */}
-        <DashboardHeader user={user} />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-200 dark:bg-gray-800 p-6">
-          {children}
-        </main>
+    <AuthProvider user={appUser}>
+      <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
+        <DashboardSidebar userRole={appUser.role} />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <DashboardHeader user={appUser} />
+          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-200 dark:bg-gray-800 p-6">
+            {children}
+          </main>
+        </div>
+        <Toaster />
       </div>
-      <Toaster />
-    </div>
+    </AuthProvider>
   );
 }

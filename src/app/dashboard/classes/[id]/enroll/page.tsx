@@ -1,8 +1,9 @@
+
 import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import { type User } from '@/lib/types';
-import EnrollClientPage from './enroll-client-page';
+import EnrollClientPage from './client-page';
 import { enrollStudent, unenrollStudent } from '../../actions';
 
 
@@ -11,8 +12,10 @@ export default async function EnrollPage({ params }: { params: { id: string } })
   const supabase = createClient(cookieStore);
 
   const { data: { user } } = await supabase.auth.getUser();
-  // Corregido: Asegura que el usuario existe y es admin
-  if (!user || user.role !== 'admin') {
+
+  // Redirect if not admin
+  const { data: profile } = await supabase.from('users').select('role').eq('id', user!.id).single();
+  if (!user || profile?.role !== 'admin') {
     redirect('/dashboard');
   }
 
@@ -36,13 +39,10 @@ export default async function EnrollPage({ params }: { params: { id: string } })
     .eq('class_id', params.id);
 
   if (classError || studentsError || enrolledError) {
-    // A more robust error page would be better here
     return <p>Error: {classError?.message || studentsError?.message || enrolledError?.message}</p>;
   }
 
   if (!danceClass) notFound();
-
-  const enrolledStudentIds = new Set(enrolled.map(e => e.user_id));
 
   return (
     <div>
@@ -51,7 +51,7 @@ export default async function EnrollPage({ params }: { params: { id: string } })
       <EnrollClientPage
         classId={params.id}
         allStudents={allStudents as User[]}
-        enrolledStudentIds={enrolledStudentIds}
+        enrolledStudents={enrolled.map(e => e.user_id)}
         enrollAction={enrollStudent}
         unenrollAction={unenrollStudent}
       />

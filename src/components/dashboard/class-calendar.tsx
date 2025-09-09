@@ -1,3 +1,4 @@
+
 'use client';
 
 import FullCalendar from '@fullcalendar/react';
@@ -9,6 +10,7 @@ type ClassCalendarProps = {
   events: EventSourceInput;
 };
 
+// This is now a simple presentation component.
 export default function ClassCalendar({ events }: ClassCalendarProps) {
   return (
     <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
@@ -21,10 +23,10 @@ export default function ClassCalendar({ events }: ClassCalendarProps) {
           right: 'dayGridMonth,timeGridWeek,timeGridDay',
         }}
         events={events}
-        height="auto" // Adjust height to fit container
-        locale="es" // Set locale to Spanish
-        slotMinTime="08:00:00" // Earliest time slot
-        slotMaxTime="22:00:00" // Latest time slot
+        height="auto"
+        locale="es"
+        slotMinTime="08:00:00"
+        slotMaxTime="22:00:00"
       />
     </div>
   );
