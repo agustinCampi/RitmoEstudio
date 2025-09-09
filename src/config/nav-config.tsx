@@ -5,24 +5,24 @@ import { LayoutGrid, Calendar, Users, Book, ClipboardCheck, User as UserIcon } f
 interface NavItem {
     label: string;
     href: string;
-    icon: React.ReactElement;
+    icon: React.ComponentType<{ className?: string }>;
 }
 
 export const adminNav: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard', icon: <LayoutGrid /> },
-  { label: 'Clases', href: '/dashboard/classes', icon: <Calendar /> },
-  { label: 'Alumnos', href: '/dashboard/students', icon: <Users /> },
-  { label: 'Profesores', href: '/dashboard/teachers', icon: <UserIcon /> },
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
+  { label: 'Clases', href: '/dashboard/classes', icon: Calendar },
+  { label: 'Alumnos', href: '/dashboard/students', icon: Users },
+  { label: 'Profesores', href: '/dashboard/teachers', icon: UserIcon },
 ];
 
 export const teacherNav: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard', icon: <LayoutGrid /> },
-  { label: 'Clases Asignadas', href: '/dashboard/assigned-classes', icon: <ClipboardCheck /> },
-  { label: 'Mi Calendario', href: '/dashboard/calendar', icon: <Calendar /> },
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
+  { label: 'Clases Asignadas', href: '/dashboard/assigned-classes', icon: ClipboardCheck },
+  { label: 'Mi Calendario', href: '/dashboard/calendar', icon: Calendar },
 ];
 
 export const studentNav: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard', icon: <LayoutGrid /> },
-  { label: 'Catálogo de Clases', href: '/dashboard/classes', icon: <Calendar /> },
-  { label: 'Mis Clases', href: '/dashboard/my-classes', icon: <Book /> },
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
+  { label: 'Catálogo de Clases', href: '/dashboard/classes', icon: Calendar },
+  { label: 'Mis Clases', href: '/dashboard/my-classes', icon: Book },
 ];
