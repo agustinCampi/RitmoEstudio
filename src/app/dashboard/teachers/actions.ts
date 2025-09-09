@@ -100,6 +100,25 @@ export async function deleteTeacher(id: string): Promise<{ success: boolean; mes
     return { success: false, message: error.message };
   }
 
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+
+  // Verificar si el profesor tiene clases asignadas
+  const { data: classes, error: checkError } = await supabase
+    .from('classes')
+    .select('id')
+    .eq('teacher_id', id)
+    .limit(1);
+
+  if (checkError) {
+    console.error('Error checking for classes:', checkError);
+    return { success: false, message: 'Error al verificar las clases del profesor.' };
+  }
+
+  if (classes && classes.length > 0) {
+    return { success: false, message: 'Este profesor no puede ser eliminado porque tiene clases asignadas.' };
+  }
+
   const { error } = await supabaseAdmin.auth.admin.deleteUser(id);
 
   if (error) {
@@ -108,5 +127,5 @@ export async function deleteTeacher(id: string): Promise<{ success: boolean; mes
   }
 
   revalidatePath('/dashboard/teachers');
-  return { success: true }; // Corregido: Devolver objeto de éxito
+  return { success: true };
 }
