@@ -22,19 +22,23 @@ export default function LoginPage() {
     setError(null);
     setIsSubmitting(true);
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (signInError) {
-      console.error("Error en el inicio de sesión:", signInError.message);
-      setError("Credenciales inválidas. Por favor, inténtalo de nuevo.");
-      setIsSubmitting(false);
-    } else {
+      if (signInError) {
+        throw new Error(signInError.message);
+      }
+      
       router.refresh();
-      // No necesitamos establecer isSubmitting en false aquí,
-      // porque la página se recargará y el estado del componente se restablecerá.
+
+    } catch (error: any) {
+       console.error("Error en el inicio de sesión:", error.message);
+       setError("Credenciales inválidas. Por favor, inténtalo de nuevo.");
+    } finally {
+        setIsSubmitting(false);
     }
   };
 
