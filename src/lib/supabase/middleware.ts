@@ -44,7 +44,5 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  await supabase.auth.getSession();
-
   return response;
 }
