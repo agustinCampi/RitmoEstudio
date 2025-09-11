@@ -1,60 +1,45 @@
-
 import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
-import { type User } from '@/lib/types';
-import EnrollClientPage from './client-page';
 import { enrollStudent, unenrollStudent } from '../../actions';
+import EnrollSelfClientPage from './enroll-self-client-page'; // Un nuevo componente cliente que crearé
 
-
-export default async function EnrollPage({ params }: { params: { id: string } }) {
+export default async function EnrollSelfPage({ params }: { params: { id: string } }) {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Redirect if not admin
-  const { data: profile } = await supabase.from('users').select('role').eq('id', user!.id).single();
-  if (!user || profile?.role !== 'admin') {
-    redirect('/dashboard');
+  // 1. Guard de seguridad: solo para alumnos
+  if (!user) return redirect('/login');
+  const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single();
+  if (profile?.role !== 'student') {
+    // Si no es un alumno, no debería estar aquí. Lo redirigimos al dashboard.
+    return redirect('/dashboard');
   }
 
-  // Fetch class details
-  const { data: danceClass, error: classError } = await supabase
-    .from('classes')
-    .select('name')
-    .eq('id', params.id)
-    .single();
+  // 2. Obtener detalles de la clase y el estado de la inscripción en paralelo
+  const [classResult, enrollmentResult] = await Promise.all([
+    supabase.from('classes').select('name, description, schedule').eq('id', params.id).single(),
+    supabase.from('class_enrollments').select('class_id').eq('class_id', params.id).eq('user_id', user.id).maybeSingle(),
+  ]);
 
-  // Fetch all students
-  const { data: allStudents, error: studentsError } = await supabase
-    .from('users')
-    .select('id, name, email')
-    .eq('role', 'student');
+  const { data: danceClass, error: classError } = classResult;
+  const { data: enrollment, error: enrollmentError } = enrollmentResult;
 
-  // Fetch currently enrolled students for this class
-  const { data: enrolled, error: enrolledError } = await supabase
-    .from('class_enrollments')
-    .select('user_id')
-    .eq('class_id', params.id);
-
-  if (classError || studentsError || enrolledError) {
-    return <p>Error: {classError?.message || studentsError?.message || enrolledError?.message}</p>;
+  if (classError) {
+    console.error('Enrollment page error:', classError);
+    return notFound();
   }
 
-  if (!danceClass) notFound();
-
+  // 3. Renderizar la página del cliente con la información obtenida
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-2">Inscribir Alumnos</h1>
-      <h2 className="text-lg text-gray-600 dark:text-gray-400 mb-6">Clase: {danceClass.name}</h2>
-      <EnrollClientPage
-        classId={params.id}
-        allStudents={allStudents as User[]}
-        enrolledStudents={enrolled.map(e => e.user_id)}
-        enrollAction={enrollStudent}
-        unenrollAction={unenrollStudent}
-      />
-    </div>
+    <EnrollSelfClientPage 
+      classId={params.id}
+      danceClass={danceClass}
+      isEnrolled={!!enrollment} // Convertir el resultado en un booleano
+      enrollAction={enrollStudent}
+      unenrollAction={unenrollStudent}
+    />
   );
 }

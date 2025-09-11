@@ -12,20 +12,22 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react';
-import { type User } from '@/lib/types';
+import { LogOut, LifeBuoy, Settings } from 'lucide-react';
+import { useAuth } from './auth-provider'; // Importar el hook de autenticación
 
-// El componente ahora recibe el objeto `user` directamente como prop
-export default function UserMenu({ user }: { user: User }) {
+export default function UserMenu() {
+  const { user } = useAuth(); // Usar el hook para obtener el usuario
   const supabase = createClient();
   const router = useRouter();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    router.push('/'); // Redirigir a la página de inicio de sesión
+    // La redirección ahora se maneja globalmente en el AuthProvider
+    // al detectar un cambio de estado de autenticación.
+    router.push('/'); 
   };
 
-  // El `user` ya no viene del hook `useAuth`, sino de las props.
+  // Si el usuario no ha cargado o no existe, no renderizar el componente
   if (!user) {
     return null;
   }
@@ -36,23 +38,26 @@ export default function UserMenu({ user }: { user: User }) {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   }
 
+  // El nombre puede estar en `user_metadata` o directamente en `full_name` del perfil
+  const displayName = user.full_name || user.user_metadata?.full_name;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-          <Avatar>
-            {/* Asumiendo que `avatar_url` puede estar en los metadatos del usuario */}
-            <AvatarImage src={user.user_metadata?.avatar_url || ''} alt={user.email || 'User'} />
-            {/* Corregido: Usar el nombre para las iniciales, con fallback al email */}
-            <AvatarFallback>{getInitials(user.user_metadata?.full_name || user.email)}</AvatarFallback>
+          <Avatar className="h-10 w-10">
+            <AvatarImage 
+              src={user.avatar_url || user.user_metadata?.avatar_url || ''} 
+              alt={displayName || 'User'} 
+            />
+            <AvatarFallback>{getInitials(displayName || user.email)}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            {/* El nombre puede estar en los metadatos del usuario */}
-            <p className="text-sm font-medium leading-none">{user.user_metadata?.full_name || user.email}</p>
+            <p className="text-sm font-medium leading-none">{displayName || 'Usuario'}</p>
             <p className="text-xs leading-none text-muted-foreground">
               {user.email}
             </p>

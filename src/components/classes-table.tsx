@@ -10,7 +10,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Trash, Edit, UserPlus, Loader2 } from 'lucide-react';
+import { Trash, Edit, UserPlus, Users, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { deleteClass } from '@/app/dashboard/classes/actions';
 import { useToast } from './ui/use-toast';
@@ -18,9 +18,10 @@ import { useState, useTransition } from 'react';
 
 type ClassesTableProps = {
   classes: DanceClass[];
+  userRole: string; 
 };
 
-export default function ClassesTable({ classes }: ClassesTableProps) {
+export default function ClassesTable({ classes, userRole }: ClassesTableProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
@@ -31,7 +32,13 @@ export default function ClassesTable({ classes }: ClassesTableProps) {
   };
 
   const handleEnroll = (id: string) => {
+    // Este es el flujo de auto-inscripción del alumno.
     router.push(`/dashboard/classes/${id}/enroll`);
+  };
+
+  const handleManageRoster = (id: string) => {
+    // CORRECCIÓN: Este es el flujo de gestión del admin, ahora apunta a la nueva ruta.
+    router.push(`/dashboard/classes/${id}/manage-roster`);
   };
 
   const handleDelete = async (id: string) => {
@@ -40,17 +47,9 @@ export default function ClassesTable({ classes }: ClassesTableProps) {
       startTransition(async () => {
         const result = await deleteClass(id);
         if (!result.success) {
-          toast({
-            title: 'Error',
-            description: result.message || 'No se pudo eliminar la clase.',
-            variant: 'destructive',
-          });
+          toast({ title: 'Error', description: result.message, variant: 'destructive' });
         } else {
-          toast({
-            title: 'Éxito',
-            description: 'Clase eliminada correctamente.',
-          });
-          // No es necesario router.refresh() porque la server action usa revalidatePath
+          toast({ title: 'Éxito', description: 'Clase eliminada.' });
         }
         setIsDeleting(null);
       });
@@ -72,28 +71,28 @@ export default function ClassesTable({ classes }: ClassesTableProps) {
             <TableRow key={danceClass.id}>
               <TableCell className="font-medium">{danceClass.name}</TableCell>
               <TableCell>
-                {danceClass.schedule && danceClass.schedule.length > 0 ? (
-                  danceClass.schedule.map((time, index) => (
-                    <div key={index}>{time}</div>
-                  ))
-                ) : (
-                  <span>-</span>
-                )}
+                {danceClass.schedule?.join(', ') || '-'}
               </TableCell>
               <TableCell className="text-right">
-                <Button variant="ghost" size="icon" onClick={() => handleEnroll(danceClass.id)} disabled={isPending}>
-                  <UserPlus className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => handleEdit(danceClass.id)} disabled={isPending}>
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => handleDelete(danceClass.id)} disabled={isPending || isDeleting === danceClass.id}>
-                  {isDeleting === danceClass.id ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Trash className="h-4 w-4" />
-                  )}
-                </Button>
+                {userRole === 'student' && (
+                  <Button variant="outline" size="sm" onClick={() => handleEnroll(danceClass.id)} disabled={isPending}>
+                    <UserPlus className="mr-2 h-4 w-4" /> Inscribirse
+                  </Button>
+                )}
+                {userRole === 'admin' && (
+                  <>
+                    {/* CORRECCIÓN: Botón para gestionar la lista de alumnos */}
+                    <Button variant="ghost" size="icon" onClick={() => handleManageRoster(danceClass.id)} disabled={isPending}>
+                      <Users className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleEdit(danceClass.id)} disabled={isPending}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete(danceClass.id)} disabled={isPending || isDeleting === danceClass.id}>
+                      {isDeleting === danceClass.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash className="h-4 w-4" />}
+                    </Button>
+                  </>
+                )}
               </TableCell>
             </TableRow>
           ))}

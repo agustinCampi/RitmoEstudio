@@ -1,60 +1,31 @@
-import { createClient } from '@/lib/supabase/server';
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
-import AuthProvider from '@/components/auth-provider';
 import DashboardSidebar from '@/components/dashboard-sidebar';
 import DashboardHeader from '@/components/dashboard-header';
 import { Toaster } from '@/components/ui/toaster';
-import { type User } from '@/lib/types';
 
-export default async function DashboardLayout({
+// El Layout del Dashboard es ahora un componente de servidor simple y sin estado.
+// No realiza obtención de datos ni validación de sesión. Esta responsabilidad
+// se delega a cada página o a un nivel superior si fuera necesario (middleware).
+
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  if (!session) {
-    redirect('/');
-  }
-
-  const { data: userProfile, error } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', session.user.id)
-    .single();
-  
-  if (error || !userProfile) {
-    // Esto puede pasar si el trigger de la BD falló.
-    // Es mejor cerrar sesión y redirigir.
-    await supabase.auth.signOut();
-    redirect('/');
-  }
-
-  // Combinamos la información de auth y de la tabla users
-  const appUser: User = {
-    ...session.user,
-    ...userProfile,
-  };
-
-
   return (
-    <AuthProvider user={appUser}>
-      <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
-        <DashboardSidebar userRole={appUser.role} />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <DashboardHeader user={appUser} />
-          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-200 dark:bg-gray-800 p-6">
+    // El AuthProvider ya no es necesario aquí, ya que el usuario no se obtiene
+    // a nivel de layout. Los componentes de cliente que necesiten info del usuario
+    // la obtendrán a través del hook useAuth, que la obtiene una vez en el cliente.
+    <>
+      <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+        <DashboardSidebar />
+        <div className="flex flex-col">
+          <DashboardHeader />
+          <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
             {children}
           </main>
         </div>
-        <Toaster />
       </div>
-    </AuthProvider>
+      <Toaster />
+    </>
   );
 }
